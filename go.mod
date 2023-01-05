@@ -1,6 +1,10 @@
-module github.com/axieinfinity/bridge-v2
+module github.com/Crossbell-Box/bridge
 
 replace github.com/ethereum/go-ethereum => ../ronin
+
+replace github.com/axieinfinity/bridge-v2 => github.com/Crossbell-Box/bridge v0.0.0-20230104065253-b525fd5b1473
+
+replace github.com/axieinfinity/bridge-core => ../bridge-core
 
 go 1.17
 
@@ -20,9 +24,12 @@ require (
 )
 
 require (
+	github.com/Crossbell-Box/bridge-contracts v0.0.0-20230105133324-50ff624238c2
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/axieinfinity/bridge-contracts v0.0.0-20221121074739-65ea5ae0d105
+	github.com/axieinfinity/bridge-contracts v0.0.0-20230104065322-79fcfb13708f
+	github.com/axieinfinity/bridge-core v0.1.2-0.20221221074635-375d6a0ea127
 	github.com/axieinfinity/bridge-migrations v0.0.0-20220803051308-adab1cd1bcca
+	github.com/axieinfinity/bridge-v2 v0.0.0-20230104084244-52f7709e109d
 	github.com/axieinfinity/ronin-kms-client v0.0.0-20220805072849-960e04981b70
 	github.com/ethereum/go-ethereum v1.10.21
 	github.com/stretchr/testify v1.8.1
@@ -31,7 +38,6 @@ require (
 
 require (
 	github.com/VictoriaMetrics/fastcache v1.10.0 // indirect
-	github.com/axieinfinity/bridge-core v0.1.2-0.20221221074635-375d6a0ea127 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -63,7 +69,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/karalabe/usb v0.0.2 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
-	github.com/kr/pretty v0.3.0 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mattn/go-sqlite3 v1.14.15 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
@@ -82,6 +88,7 @@ require (
 	github.com/prometheus/tsdb v0.10.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
+	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/status-im/keycard-go v0.0.0-20190316090335-8537d3370df4 // indirect
@@ -96,7 +103,6 @@ require (
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	google.golang.org/grpc v1.48.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/sqlite v1.3.6 // indirect

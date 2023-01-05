@@ -20,7 +20,7 @@ type BridgeController struct {
 
 func NewBridgeController(cfg *bridgeCore.Config, db *gorm.DB, helpers utils.Utils) (*BridgeController, error) {
 	bridgeCore.AddListener("Ethereum", InitEthereum)
-	bridgeCore.AddListener("Ronin", InitRonin)
+	// bridgeCore.AddListener("Ronin", InitRonin)
 	controller, err := bridgeCore.New(cfg, db, helpers)
 	if err != nil {
 		return nil, err

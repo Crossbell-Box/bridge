@@ -20,6 +20,11 @@ const (
 	ETH_GOVERNANCE_CONTRACT       = "EthGovernance"
 	ETH_GATEWAY_CONTRACT          = "EthGateway"
 	BRIDGEADMIN_CONTRACT          = "BridgeAdmin"
+
+	CROSSBELL_GATEWAY_CONTRACT = "CrossbellGateway"
+	CROSSBELL_VALIDATOR        = "CrossbellValidator"
+	MAINCHAIN_GATEWAY_CONTRACT = "MainchainGateway"
+	MAINCHAIN_VALIDATOR        = "MainchainValidator"
 )
 
 const (

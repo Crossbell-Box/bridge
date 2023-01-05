@@ -1,0 +1,64 @@
+{
+    "listeners": {
+      "Ronin": {
+        "chainId": "0x4f",
+        "rpcUrl": "http://localhost:8546",
+        "blockTime": 15,
+        "safeBlockRange": 10,
+        "maxTasksQuery": 100,
+        "minTasksQuery": 20,
+        "taskInterval": 15,
+        "transactionCheckPeriod": 5,
+        "secret": {
+          "validator": {
+            "plainPrivateKey": ""
+          },
+          "voter": {
+            "plainPrivateKey": ""
+          },
+          "relayer": {
+            "plainPrivateKey": "5407c316392474bb25e9d440ad8086d978c212f72ed39cd116c676f481fecf42"
+          }
+        },
+        "fromHeight": 0,
+        "processWithinBlocks": 400,
+        "contracts": {
+          "CrossbellGateway": "0xe1a18b177C78387167Ae27994EECA795fac78353",
+          "Validator": ""
+        },
+        "subscriptions": {
+        }
+      },
+      "Ethereum": {
+        "chainId": "0x539",
+        "rpcUrl": "http://127.0.0.1:8545",
+        "blockTime": 15,
+        "safeBlockRange": 8,
+        "transactionCheckPeriod": 5,
+        "secret": {
+          "validator": {
+            "plainPrivateKey": ""
+          },
+          "relayer": {
+            "plainPrivateKey": ""
+          }
+        },
+        "fromHeight": 0,
+        "processWithinBlocks": 400,
+        "contracts": {
+          "MainchainGateway": "0xF68df71F99c9F622ef82cd4b704923b01461c33d",
+          "Validator": ""
+        },
+        "subscriptions": {
+        }
+      }
+    },
+    "database": {
+      "host": "localhost",
+      "user": "ronin-bridge",
+      "password": "let-me-in",
+      "dbName": "myronin1",
+      "port": 5432,
+      "maxOpenConns": 50
+    }
+  }
