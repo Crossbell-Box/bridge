@@ -35,8 +35,10 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/Crossbell-Box/bridge v0.0.0-20230104065253-b525fd5b1473 h1:dyyWRGefIxIIi4eaeMFGNpe4ZgQZGKOFTRq41HVYWmc=
 github.com/Crossbell-Box/bridge v0.0.0-20230104065253-b525fd5b1473/go.mod h1:5YjCwLatBUzEm5Yfwo9sRvMNiiK/yz7rDk2dRJ4IQo8=
-github.com/Crossbell-Box/bridge-contracts v0.0.0-20230105133324-50ff624238c2 h1:uq1tJdfbLAWrkNyH+7gypaVthCZd/4PR4FK9bFlWtrg=
-github.com/Crossbell-Box/bridge-contracts v0.0.0-20230105133324-50ff624238c2/go.mod h1:MaWn2W6Fu8OzwVE2F4JKYFndrnQzWpdE/G1W77cigiA=
+github.com/Crossbell-Box/bridge-contracts v0.0.0-20230106071810-49146952ab9a h1:GY98UtPY/L/JytuR51WnL1bMg+Jmpl8IjIpUw2q3fF8=
+github.com/Crossbell-Box/bridge-contracts v0.0.0-20230106071810-49146952ab9a/go.mod h1:MaWn2W6Fu8OzwVE2F4JKYFndrnQzWpdE/G1W77cigiA=
+github.com/Crossbell-Box/bridge-contracts v0.0.0-20230106074101-d89a635fd65b h1:XNAa3ORd5Hj7gZ4GwVDqjV/MS6kvoPNnkAhwXt3NY2I=
+github.com/Crossbell-Box/bridge-contracts v0.0.0-20230106074101-d89a635fd65b/go.mod h1:MaWn2W6Fu8OzwVE2F4JKYFndrnQzWpdE/G1W77cigiA=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=

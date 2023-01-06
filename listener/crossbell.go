@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"time"
 
+	crossbellGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/gateway"
 	crossbellValidator "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/governance"
 	"github.com/axieinfinity/bridge-contracts/generated_contracts/ethereum/gateway"
 	gateway2 "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/gateway"
@@ -63,25 +64,24 @@ func (l *CrossbellListener) IsUpTodate() bool {
 func (l *CrossbellListener) provideReceiptSignature(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte, isAgain bool) error {
 	// check database if receipt exist then do nothing
 	// Unpack event from data
-	ronEvent := new(gateway2.GatewayWithdrawalRequested)
-	ronGatewayAbi, err := gateway2.GatewayMetaData.GetAbi()
+	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawal)
+	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
 	if err != nil {
 		return err
 	}
 
 	var eventName string
 	if isAgain {
-		eventName = "WithdrawalSignaturesRequested"
+		eventName = "requestWithdrawalSignatures"
 	} else {
-		eventName = "WithdrawalRequested"
+		eventName = "requestWithdrawal"
 	}
 
-	if err = l.utilsWrapper.UnpackLog(*ronGatewayAbi, ronEvent, eventName, data); err != nil {
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, eventName, data); err != nil {
 		return err
 	}
-	receipt := ronEvent.Arg1
 
-	log.Info("[CrossbellListener][ProvideReceiptSignatureCallback] result of calling MainchainWithdrew function", "receiptId", receipt.Id.Int64(), "tx", tx.GetHash().Hex())
+	log.Info("[CrossbellListener][ProvideReceiptSignatureCallback] result of calling MainchainWithdrew function", "receiptId", crossbellEvent.WithdrawId.Int64(), "tx", tx.GetHash().Hex())
 	// otherwise, create a task for submitting signature
 	// get chainID
 	chainId, err := l.GetChainID()
