@@ -8,6 +8,7 @@ import (
 	roninGovernance "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/governance"
 
 	crossbellGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/gateway"
+	mainchainGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/mainchain/gateway"
 	"github.com/axieinfinity/bridge-v2/stores"
 	"github.com/ethereum/go-ethereum/signer/core"
 
@@ -293,7 +294,7 @@ func (r *bulkTask) sendAckTransactions(tasks []*models.Task) (doneTasks, process
 		ids []*big.Int
 	)
 	// create transactor
-	transactor, err := roninGateway.NewGatewayTransactor(common.HexToAddress(r.contracts[GATEWAY_CONTRACT]), r.client)
+	transactor, err := crossbellGateway.NewCrossbellGatewayTransactor(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
 	if err != nil {
 		for _, t := range tasks {
 			t.LastError = err.Error()
@@ -302,7 +303,7 @@ func (r *bulkTask) sendAckTransactions(tasks []*models.Task) (doneTasks, process
 	}
 
 	// create caller
-	caller, err := roninGateway.NewGatewayCaller(common.HexToAddress(r.contracts[GATEWAY_CONTRACT]), r.client)
+	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
 	if err != nil {
 		for _, t := range tasks {
 			t.LastError = err.Error()
@@ -387,24 +388,28 @@ func (r *bulkTask) validateDepositTask(caller *roninGateway.GatewayCaller, task 
 // - withdrawal request is executed or not
 // returns true if withdraw is executed or voted
 // also returns receipt id
-func (r *bulkTask) validateAckWithdrawalTask(caller *roninGateway.GatewayCaller, task *models.Task) (bool, *big.Int, error) {
+func (r *bulkTask) validateAckWithdrawalTask(caller *crossbellGateway.CrossbellGatewayCaller, task *models.Task) (bool, *big.Int, error) {
 	// Unpack event data
-	ethEvent := new(gateway.GatewayWithdrew)
-	ethGatewayAbi, err := gateway.GatewayMetaData.GetAbi()
+	mainchainEvent := new(mainchainGateway.MainchainGatewayWithdrew)
+	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
 	if err != nil {
 		return false, nil, err
 	}
 
-	if err = r.util.UnpackLog(*ethGatewayAbi, ethEvent, "Withdrew", common.Hex2Bytes(task.Data)); err != nil {
+	if err = r.util.UnpackLog(*mainchainGatewayAbi, mainchainEvent, "Withdrew", common.Hex2Bytes(task.Data)); err != nil {
 		return false, nil, err
 	}
 
 	// check if withdrew has been voted or not
-	voted, err := caller.MainchainWithdrewVoted(nil, ethEvent.Receipt.Id, r.listener.GetValidatorSign().GetAddress())
+	// check if withdrew has been voted or not
+	// TODO currently there's no chainId in a withdrew event so i just input a random one
+	// replace this chainId
+	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, big.NewInt(5), mainchainEvent.WithdrawalId, r.listener.GetValidatorSign().GetAddress())
 	if err != nil {
 		return false, nil, err
 	}
-	return voted, ethEvent.Receipt.Id, nil
+	voted := int(big.NewInt(0).SetBytes(acknowledgementHash[:]).Uint64()) == 0
+	return voted, mainchainEvent.WithdrawalId, nil
 }
 
 // ValidateWithdrawalTask validates if:

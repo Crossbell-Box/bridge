@@ -7,6 +7,7 @@ import (
 
 	crossbellGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/gateway"
 	crossbellValidator "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/governance"
+	mainchainGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/mainchain/gateway"
 	"github.com/axieinfinity/bridge-contracts/generated_contracts/ethereum/gateway"
 	gateway2 "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/gateway"
 	bridgeCore "github.com/axieinfinity/bridge-core"
@@ -185,8 +186,8 @@ func (l *CrossbellListener) isValidatorNode() (bool, error) {
 func (l *CrossbellListener) WithdrewCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	log.Info("[CrossbellListener] WithdrewCallback", "tx", tx.GetHash().Hex())
 	// Unpack event data
-	ethEvent := new(gateway.GatewayWithdrew)
-	ethGatewayAbi, err := gateway.GatewayMetaData.GetAbi()
+	ethEvent := new(mainchainGateway.MainchainGatewayWithdrew)
+	ethGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
 	if err != nil {
 		return err
 	}
@@ -194,7 +195,7 @@ func (l *CrossbellListener) WithdrewCallback(fromChainId *big.Int, tx bridgeCore
 	if err = l.utilsWrapper.UnpackLog(*ethGatewayAbi, ethEvent, "Withdrew", data); err != nil {
 		return err
 	}
-	log.Info("[CrossbellListener][WithdrewCallback] result of calling MainchainWithdrew function", "receiptId", ethEvent.Receipt.Id.Int64(), "tx", tx.GetHash().Hex())
+	log.Info("[CrossbellListener][WithdrewCallback] result of calling MainchainWithdrew function", "receiptId", ethEvent.WithdrawalId.Int64(), "tx", tx.GetHash().Hex())
 	// get chainID
 	chainId, err := l.GetChainID()
 	if err != nil {
