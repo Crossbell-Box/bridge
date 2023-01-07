@@ -12,7 +12,6 @@ import (
 	"github.com/axieinfinity/bridge-v2/stores"
 	"github.com/ethereum/go-ethereum/signer/core"
 
-	"github.com/axieinfinity/bridge-contracts/generated_contracts/ethereum/gateway"
 	roninGateway "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/gateway"
 	bridgeCore "github.com/axieinfinity/bridge-core"
 	"github.com/axieinfinity/bridge-core/metrics"
@@ -52,6 +51,14 @@ type withdrawReceipt struct {
 	token      common.Address
 	amount     *big.Int
 	fee        *big.Int
+}
+
+type depositReceipt struct {
+	chainId   *big.Int
+	depositId *big.Int
+	recipient common.Address
+	token     common.Address
+	amount    *big.Int
 }
 
 func newBulkTask(listener bridgeCore.Listener, client *ethclient.Client, store stores.BridgeStore, chainId *big.Int, contracts map[string]string, ticker time.Duration, maxTry int, taskType string, releaseTasksCh chan int, util utils.Utils) *bulkTask {
@@ -119,10 +126,15 @@ func (r *bulkTask) sendBulkTransactions(sendTxs func(tasks []*models.Task) (done
 
 func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, processingTasks, failedTasks []*models.Task, tx *ethtypes.Transaction) {
 	var (
-		receipts []roninGateway.TransferReceipt
+		receipts   []depositReceipt
+		chainIds   []*big.Int
+		depositIds []*big.Int
+		recipients []common.Address
+		tokens     []common.Address
+		amounts    []*big.Int
 	)
 	// create caller
-	caller, err := roninGateway.NewGatewayCaller(common.HexToAddress(r.contracts[GATEWAY_CONTRACT]), r.client)
+	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
 	if err != nil {
 		for _, t := range tasks {
 			t.LastError = err.Error()
@@ -132,7 +144,7 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 	}
 
 	// create transactor
-	transactor, err := roninGateway.NewGatewayTransactor(common.HexToAddress(r.contracts[GATEWAY_CONTRACT]), r.client)
+	transactor, err := crossbellGateway.NewCrossbellGatewayTransactor(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
 	if err != nil {
 		for _, t := range tasks {
 			t.LastError = err.Error()
@@ -149,9 +161,9 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 			continue
 		}
 
-		if receipt.Id != nil {
+		if receipt.depositId != nil {
 			// store receiptId to processed receipt
-			if err := r.store.GetProcessedReceiptStore().Save(t.ID, receipt.Id.Int64()); err != nil {
+			if err := r.store.GetProcessedReceiptStore().Save(t.ID, receipt.depositId.Int64()); err != nil {
 				log.Error("[bulkTask][sendDepositTransaction] error while saving processed receipt", "err", err)
 			}
 		}
@@ -166,31 +178,25 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 		processingTasks = append(processingTasks, t)
 
 		// append new receipt into receipts slice
-		receipts = append(receipts, roninGateway.TransferReceipt{
-			Id:   receipt.Id,
-			Kind: receipt.Kind,
-			Mainchain: roninGateway.TokenOwner{
-				Addr:      receipt.Mainchain.Addr,
-				TokenAddr: receipt.Mainchain.TokenAddr,
-				ChainId:   receipt.Mainchain.ChainId,
-			},
-			Ronin: roninGateway.TokenOwner{
-				Addr:      receipt.Ronin.Addr,
-				TokenAddr: receipt.Ronin.TokenAddr,
-				ChainId:   receipt.Ronin.ChainId,
-			},
-			Info: roninGateway.TokenInfo{
-				Erc:      receipt.Info.Erc,
-				Id:       receipt.Info.Id,
-				Quantity: receipt.Info.Quantity,
-			},
+		// TODO change chainId!!!!
+		chainIds = append(chainIds, big.NewInt(1))
+		depositIds = append(depositIds, receipt.depositId)
+		recipients = append(recipients, receipt.recipient)
+		tokens = append(tokens, receipt.token)
+		amounts = append(amounts, receipt.amount)
+		receipts = append(receipts, depositReceipt{
+			chainId:   big.NewInt(1),
+			depositId: receipt.depositId,
+			recipient: receipt.recipient,
+			token:     receipt.token,
+			amount:    receipt.amount,
 		})
 	}
 	metrics.Pusher.IncrCounter(metrics.DepositTaskMetric, len(tasks))
 
 	if len(receipts) > 0 {
 		tx, err = r.util.SendContractTransaction(r.listener.GetValidatorSign(), r.chainId, func(opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return transactor.TryBulkDepositFor(opts, receipts)
+			return transactor.BatchAckDeposit(opts, chainIds, depositIds, recipients, tokens, amounts)
 		})
 		if err != nil {
 			for _, t := range processingTasks {
@@ -339,23 +345,24 @@ func (r *bulkTask) sendAckTransactions(tasks []*models.Task) (doneTasks, process
 	}
 
 	metrics.Pusher.IncrCounter(metrics.AckWithdrawalTaskMetric, len(tasks))
-	if len(ids) > 0 {
-		tx, err = r.util.SendContractTransaction(r.listener.GetValidatorSign(), r.chainId, func(opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return transactor.TryBulkAcknowledgeMainchainWithdrew(opts, ids)
-		})
-		if err != nil {
-			// append all success tasks into failed tasks
-			for _, t := range processingTasks {
-				t.LastError = err.Error()
-				if err.Error() == ErrNotBridgeOperator {
-					doneTasks = append(doneTasks, t)
-				} else {
-					failedTasks = append(failedTasks, t)
-				}
-			}
-			return doneTasks, nil, failedTasks, nil
-		}
-	}
+	// TODO: ack withdraw
+	// if len(ids) > 0 {
+	// 	tx, err = r.util.SendContractTransaction(r.listener.GetValidatorSign(), r.chainId, func(opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+	// 		return transactor.BatchAckDeposit(opts, ids)
+	// 	})
+	// 	if err != nil {
+	// 		// append all success tasks into failed tasks
+	// 		for _, t := range processingTasks {
+	// 			t.LastError = err.Error()
+	// 			if err.Error() == ErrNotBridgeOperator {
+	// 				doneTasks = append(doneTasks, t)
+	// 			} else {
+	// 				failedTasks = append(failedTasks, t)
+	// 			}
+	// 		}
+	// 		return doneTasks, nil, failedTasks, nil
+	// 	}
+	// }
 	return
 }
 
@@ -363,24 +370,26 @@ func (r *bulkTask) sendAckTransactions(tasks []*models.Task) (doneTasks, process
 // - current signer has been voted for a deposit request or not
 // - deposit request has been executed or not
 // also returns transfer receipt
-func (r *bulkTask) validateDepositTask(caller *roninGateway.GatewayCaller, task *models.Task) (bool, gateway.TransferReceipt, error) {
-	ethEvent := new(gateway.GatewayDepositRequested)
-	ethGatewayAbi, err := gateway.GatewayMetaData.GetAbi()
+func (r *bulkTask) validateDepositTask(caller *crossbellGateway.CrossbellGatewayCaller, task *models.Task) (bool, depositReceipt, error) {
+	mainchainEvent := new(mainchainGateway.MainchainGatewayRequestDeposit)
+	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
 	if err != nil {
-		return false, ethEvent.Receipt, err
+		return false, depositReceipt{}, err
 	}
 
 	data := common.Hex2Bytes(task.Data)
-	if err = r.util.UnpackLog(*ethGatewayAbi, ethEvent, "DepositRequested", data); err != nil {
-		return false, ethEvent.Receipt, err
+	if err = r.util.UnpackLog(*mainchainGatewayAbi, mainchainEvent, "RequestDeposit", data); err != nil {
+		return false, depositReceipt{}, err
 	}
 
 	// check if current validator has been voted for this deposit or not
-	voted, err := caller.DepositVoted(nil, ethEvent.Receipt.Mainchain.ChainId, ethEvent.Receipt.Id, r.listener.GetValidatorSign().GetAddress())
+	// TODO change big.NewInt(1) into chainId from event!!!!
+	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, big.NewInt(1), mainchainEvent.DepositId, r.listener.GetValidatorSign().GetAddress())
+	voted := int(big.NewInt(0).SetBytes(acknowledgementHash[:]).Uint64()) == 0
 	if err != nil {
-		return false, ethEvent.Receipt, err
+		return false, depositReceipt{}, err
 	}
-	return voted, ethEvent.Receipt, nil
+	return voted, depositReceipt{big.NewInt(1), mainchainEvent.DepositId, mainchainEvent.Recipient, mainchainEvent.Token, mainchainEvent.Amount}, nil
 }
 
 // ValidateAckWithdrawalTask validates if:

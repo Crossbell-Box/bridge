@@ -8,8 +8,6 @@ import (
 	crossbellGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/gateway"
 	crossbellValidator "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/governance"
 	mainchainGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/mainchain/gateway"
-	"github.com/axieinfinity/bridge-contracts/generated_contracts/ethereum/gateway"
-	gateway2 "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/gateway"
 	bridgeCore "github.com/axieinfinity/bridge-core"
 	bridgeCoreModels "github.com/axieinfinity/bridge-core/models"
 	bridgeCoreStores "github.com/axieinfinity/bridge-core/stores"
@@ -116,17 +114,17 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 	log.Info("[CrossbellListener] DepositRequestedCallback", "tx", tx.GetHash().Hex())
 	// check whether deposit is done or not
 	// Unpack event data
-	ethEvent := new(gateway.GatewayDepositRequested)
-	ethGatewayAbi, err := gateway.GatewayMetaData.GetAbi()
+	ethEvent := new(mainchainGateway.MainchainGatewayRequestDeposit)
+	ethGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
 	if err != nil {
 		return err
 	}
 
-	if err = l.utilsWrapper.UnpackLog(*ethGatewayAbi, ethEvent, "DepositRequested", data); err != nil {
+	if err = l.utilsWrapper.UnpackLog(*ethGatewayAbi, ethEvent, "RequestDeposit", data); err != nil {
 		return err
 	}
 	// create caller
-	caller, err := gateway2.NewGatewayCaller(common.HexToAddress(l.config.Contracts[task.GATEWAY_CONTRACT]), l.client)
+	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(l.config.Contracts[task.CROSSBELL_GATEWAY_CONTRACT]), l.client)
 	if err != nil {
 		return err
 	}
@@ -135,13 +133,15 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 	if err != nil {
 		return err
 	}
-
-	// check if current validator has been voted for this deposit or not
-	voted, err := caller.DepositVoted(nil, ethEvent.Receipt.Mainchain.ChainId, ethEvent.Receipt.Id, l.GetValidatorSign().GetAddress())
+	log.Info("[CrossbellListener][DepositRequestedCallback] result of calling DepositVoted function", "receiptId", ethEvent.DepositId, "tx", tx.GetHash().Hex())
 	if err != nil {
 		return err
 	}
-	log.Info("[CrossbellListener][DepositRequestedCallback] result of calling DepositVoted function", "voted", voted, "receiptId", ethEvent.Receipt.Id, "tx", tx.GetHash().Hex())
+
+	// check if current validator has been voted for this deposit or not
+	// TODO change big.NewInt(1) into ethEvent.chainId!!!!
+	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, big.NewInt(1), ethEvent.DepositId, l.GetValidatorSign().GetAddress())
+	voted := int(big.NewInt(0).SetBytes(acknowledgementHash[:]).Uint64()) == 0
 	if voted {
 		return nil
 	}
