@@ -295,76 +295,76 @@ func (r *bulkTask) sendWithdrawalSignaturesTransaction(tasks []*models.Task) (do
 	return
 }
 
-func (r *bulkTask) sendAckTransactions(tasks []*models.Task) (doneTasks, processingTasks, failedTasks []*models.Task, tx *ethtypes.Transaction) {
-	var (
-		ids []*big.Int
-	)
-	// create transactor
-	transactor, err := crossbellGateway.NewCrossbellGatewayTransactor(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
-	if err != nil {
-		for _, t := range tasks {
-			t.LastError = err.Error()
-		}
-		return nil, nil, tasks, nil
-	}
+// func (r *bulkTask) sendAckTransactions(tasks []*models.Task) (doneTasks, processingTasks, failedTasks []*models.Task, tx *ethtypes.Transaction) {
+// 	var (
+// 		ids []*big.Int
+// 	)
+// 	// create transactor
+// 	transactor, err := crossbellGateway.NewCrossbellGatewayTransactor(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
+// 	if err != nil {
+// 		for _, t := range tasks {
+// 			t.LastError = err.Error()
+// 		}
+// 		return nil, nil, tasks, nil
+// 	}
 
-	// create caller
-	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
-	if err != nil {
-		for _, t := range tasks {
-			t.LastError = err.Error()
-		}
-		return nil, nil, tasks, nil
-	}
+// 	// create caller
+// 	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
+// 	if err != nil {
+// 		for _, t := range tasks {
+// 			t.LastError = err.Error()
+// 		}
+// 		return nil, nil, tasks, nil
+// 	}
 
-	// loop through tasks, check if they are qualified to send ack transaction or not
-	for _, t := range tasks {
-		result, id, err := r.validateAckWithdrawalTask(caller, t)
-		if err != nil {
-			t.LastError = err.Error()
-			failedTasks = append(failedTasks, t)
-			continue
-		}
+// 	// loop through tasks, check if they are qualified to send ack transaction or not
+// 	for _, t := range tasks {
+// 		result, id, err := r.validateAckWithdrawalTask(caller, t)
+// 		if err != nil {
+// 			t.LastError = err.Error()
+// 			failedTasks = append(failedTasks, t)
+// 			continue
+// 		}
 
-		if id != nil {
-			// store receiptId to processed receipt
-			if err := r.store.GetProcessedReceiptStore().Save(t.ID, id.Int64()); err != nil {
-				log.Error("[bulkTask][sendAckTransactions] error while saving processed receipt", "err", err)
-			}
-		}
+// 		if id != nil {
+// 			// store receiptId to processed receipt
+// 			if err := r.store.GetProcessedReceiptStore().Save(t.ID, id.Int64()); err != nil {
+// 				log.Error("[bulkTask][sendAckTransactions] error while saving processed receipt", "err", err)
+// 			}
+// 		}
 
-		// if validated then do nothing and add to doneTasks
-		if result {
-			doneTasks = append(doneTasks, t)
-			continue
-		}
+// 		// if validated then do nothing and add to doneTasks
+// 		if result {
+// 			doneTasks = append(doneTasks, t)
+// 			continue
+// 		}
 
-		// otherwise add id to ids and add task to processingTasks
-		ids = append(ids, id)
-		processingTasks = append(processingTasks, t)
-	}
+// 		// otherwise add id to ids and add task to processingTasks
+// 		ids = append(ids, id)
+// 		processingTasks = append(processingTasks, t)
+// 	}
 
-	metrics.Pusher.IncrCounter(metrics.AckWithdrawalTaskMetric, len(tasks))
-	// TODO: ack withdraw
-	// if len(ids) > 0 {
-	// 	tx, err = r.util.SendContractTransaction(r.listener.GetValidatorSign(), r.chainId, func(opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-	// 		return transactor.BatchAckDeposit(opts, ids)
-	// 	})
-	// 	if err != nil {
-	// 		// append all success tasks into failed tasks
-	// 		for _, t := range processingTasks {
-	// 			t.LastError = err.Error()
-	// 			if err.Error() == ErrNotBridgeOperator {
-	// 				doneTasks = append(doneTasks, t)
-	// 			} else {
-	// 				failedTasks = append(failedTasks, t)
-	// 			}
-	// 		}
-	// 		return doneTasks, nil, failedTasks, nil
-	// 	}
-	// }
-	return
-}
+// 	metrics.Pusher.IncrCounter(metrics.AckWithdrawalTaskMetric, len(tasks))
+// 	// TODO: ack withdraw
+// 	if len(ids) > 0 {
+// 		tx, err = r.util.SendContractTransaction(r.listener.GetValidatorSign(), r.chainId, func(opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
+// 			return transactor.BatchAckDeposit(opts, ids, )
+// 		})
+// 		if err != nil {
+// 			// append all success tasks into failed tasks
+// 			for _, t := range processingTasks {
+// 				t.LastError = err.Error()
+// 				if err.Error() == ErrNotBridgeOperator {
+// 					doneTasks = append(doneTasks, t)
+// 				} else {
+// 					failedTasks = append(failedTasks, t)
+// 				}
+// 			}
+// 			return doneTasks, nil, failedTasks, nil
+// 		}
+// 	}
+// 	return
+// }
 
 // ValidateDepositTask validates if:
 // - current signer has been voted for a deposit request or not
