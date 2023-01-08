@@ -24,7 +24,7 @@ require (
 )
 
 require (
-	github.com/Crossbell-Box/bridge-contracts v0.0.0-20230106074101-d89a635fd65b
+	github.com/Crossbell-Box/bridge-contracts v0.0.0-20230107113411-8a37b19000e2
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/axieinfinity/bridge-contracts v0.0.0-20230104065322-79fcfb13708f
 	github.com/axieinfinity/bridge-core v0.1.2-0.20221221074635-375d6a0ea127

@@ -45,6 +45,34 @@ func (l *CrossbellListener) NewJobFromDB(job *bridgeCoreModels.Job) (bridgeCore.
 	return newJobFromDB(l, job)
 }
 
+// // StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
+// func (l *CrossbellListener) StoreMainchainWithdrawCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+// 	log.Info("[CrossbellListener] StoreMainchainWithdrawCallback", "tx", tx.GetHash().Hex())
+// 	crossbellEvent := new(crossbellGateway.CrossbellGatewayMainchainWithdrew)
+// 	ronGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if err = l.utilsWrapper.UnpackLog(*ronGatewayAbi, crossbellEvent, "MainchainWithdrew", data); err != nil {
+// 		return err
+// 	}
+// 	receipt := crossbellEvent.Receipt
+// 	// store ronEvent to database at withdrawal
+// 	return l.bridgeStore.GetWithdrawalStore().Save(&models.Withdrawal{
+// 		WithdrawalId:         receipt.Id.Int64(),
+// 		ExternalAddress:      receipt.Mainchain.Addr.Hex(),
+// 		ExternalTokenAddress: receipt.Mainchain.TokenAddr.Hex(),
+// 		ExternalChainId:      receipt.Mainchain.ChainId.Int64(),
+// 		RoninAddress:         receipt.Ronin.Addr.Hex(),
+// 		RoninTokenAddress:    receipt.Ronin.TokenAddr.Hex(),
+// 		TokenErc:             receipt.Info.Erc,
+// 		TokenId:              receipt.Info.Id.Int64(),
+// 		TokenQuantity:        receipt.Info.Quantity.String(),
+// 		Transaction:          tx.GetHash().Hex(),
+// 	})
+// }
+
 func (l *CrossbellListener) IsUpTodate() bool {
 	latestBlock, err := l.GetLatestBlock()
 	if err != nil {
