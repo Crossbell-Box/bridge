@@ -45,33 +45,30 @@ func (l *CrossbellListener) NewJobFromDB(job *bridgeCoreModels.Job) (bridgeCore.
 	return newJobFromDB(l, job)
 }
 
-// // StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
-// func (l *CrossbellListener) StoreMainchainWithdrawCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-// 	log.Info("[CrossbellListener] StoreMainchainWithdrawCallback", "tx", tx.GetHash().Hex())
-// 	crossbellEvent := new(crossbellGateway.CrossbellGatewayMainchainWithdrew)
-// 	ronGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
-// 	if err != nil {
-// 		return err
-// 	}
+// StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
+func (l *CrossbellListener) StoreMainchainWithdrewCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	log.Info("[CrossbellListener] StoreMainchainWithdrawCallback", "tx", tx.GetHash().Hex())
+	mainchainEvent := new(mainchainGateway.MainchainGatewayWithdrew)
+	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
 
-// 	if err = l.utilsWrapper.UnpackLog(*ronGatewayAbi, crossbellEvent, "MainchainWithdrew", data); err != nil {
-// 		return err
-// 	}
-// 	receipt := crossbellEvent.Receipt
-// 	// store ronEvent to database at withdrawal
-// 	return l.bridgeStore.GetWithdrawalStore().Save(&models.Withdrawal{
-// 		WithdrawalId:         receipt.Id.Int64(),
-// 		ExternalAddress:      receipt.Mainchain.Addr.Hex(),
-// 		ExternalTokenAddress: receipt.Mainchain.TokenAddr.Hex(),
-// 		ExternalChainId:      receipt.Mainchain.ChainId.Int64(),
-// 		RoninAddress:         receipt.Ronin.Addr.Hex(),
-// 		RoninTokenAddress:    receipt.Ronin.TokenAddr.Hex(),
-// 		TokenErc:             receipt.Info.Erc,
-// 		TokenId:              receipt.Info.Id.Int64(),
-// 		TokenQuantity:        receipt.Info.Quantity.String(),
-// 		Transaction:          tx.GetHash().Hex(),
-// 	})
-// }
+	if err = l.utilsWrapper.UnpackLog(*mainchainGatewayAbi, mainchainEvent, "Withdrew", data); err != nil {
+		return err
+	}
+	// store ronEvent to database at withdrawal
+	return l.bridgeStore.GetWithdrawalStore().Save(&models.Withdrawal{
+		WithdrawalId:         mainchainEvent.WithdrawalId.Int64(),
+		ExternalAddress:      tx.GetFromAddress(),        // from address (the address who submits the signatures into mainchain and gets the fee)
+		ExternalTokenAddress: mainchainEvent.Token.Hex(), // token address on mainchain
+		ExternalChainId:      mainchainEvent.ChainId.Int64(),
+		RecipientAddress:     mainchainEvent.Recipient.Hex(),
+		// RoninTokenAddress:    mainchainEvent.Token.Hex(), // how to get token address on crossbell
+		TokenQuantity: mainchainEvent.Amount.String(),
+		Transaction:   tx.GetHash().Hex(),
+	})
+}
 
 func (l *CrossbellListener) IsUpTodate() bool {
 	latestBlock, err := l.GetLatestBlock()
@@ -108,7 +105,7 @@ func (l *CrossbellListener) provideReceiptSignature(fromChainId *big.Int, tx bri
 		return err
 	}
 
-	log.Info("[CrossbellListener][ProvideReceiptSignatureCallback] result of calling MainchainWithdrew function", "receiptId", crossbellEvent.WithdrawId.Int64(), "tx", tx.GetHash().Hex())
+	log.Info("[CrossbellListener][ProvideReceiptSignatureCallback] result of calling MainchainWithdrew function", "receiptId", crossbellEvent.WithdrawalId.Int64(), "tx", tx.GetHash().Hex())
 	// otherwise, create a task for submitting signature
 	// get chainID
 	chainId, err := l.GetChainID()
@@ -168,8 +165,8 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 
 	// check if current validator has been voted for this deposit or not
 	// TODO change big.NewInt(1) into ethEvent.chainId!!!!
-	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, big.NewInt(1), ethEvent.DepositId, l.GetValidatorSign().GetAddress())
-	voted := int(big.NewInt(0).SetBytes(acknowledgementHash[:]).Uint64()) == 0
+	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, big.NewInt(5), ethEvent.DepositId, l.GetValidatorSign().GetAddress())
+	voted := int(big.NewInt(0).SetBytes(acknowledgementHash[:]).Uint64()) != 0
 	if voted {
 		return nil
 	}
@@ -209,38 +206,6 @@ func (l *CrossbellListener) isValidatorNode() (bool, error) {
 	}
 
 	return isRelayer, nil
-}
-
-func (l *CrossbellListener) WithdrewCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	log.Info("[CrossbellListener] WithdrewCallback", "tx", tx.GetHash().Hex())
-	// Unpack event data
-	ethEvent := new(mainchainGateway.MainchainGatewayWithdrew)
-	ethGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
-	if err != nil {
-		return err
-	}
-
-	if err = l.utilsWrapper.UnpackLog(*ethGatewayAbi, ethEvent, "Withdrew", data); err != nil {
-		return err
-	}
-	log.Info("[CrossbellListener][WithdrewCallback] result of calling MainchainWithdrew function", "receiptId", ethEvent.WithdrawalId.Int64(), "tx", tx.GetHash().Hex())
-	// get chainID
-	chainId, err := l.GetChainID()
-	if err != nil {
-		return err
-	}
-	ackWithdrewTask := &models.Task{
-		ChainId:         hexutil.EncodeBig(chainId),
-		FromChainId:     hexutil.EncodeBig(fromChainId),
-		FromTransaction: tx.GetHash().Hex(),
-		Type:            task.ACK_WITHDREW_TASK,
-		Data:            common.Bytes2Hex(data),
-		Retries:         0,
-		Status:          task.STATUS_PENDING,
-		LastError:       "",
-		CreatedAt:       time.Now().Unix(),
-	}
-	return l.bridgeStore.GetTaskStore().Save(ackWithdrewTask)
 }
 
 type CrossbellCallBackJob struct {

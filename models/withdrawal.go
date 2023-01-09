@@ -10,10 +10,7 @@ type Withdrawal struct {
 	ExternalAddress      string `json:"externalAddress" gorm:"column:external_address;index:idx_withdrawal_external_address;not null"`
 	ExternalTokenAddress string `json:"externalTokenAddress" gorm:"column:external_token_address;index:idx_withdrawal_external_token_address;not null"`
 	ExternalChainId      int64  `json:"externalChainId" gorm:"column:external_chain_id;not null"`
-	RoninAddress         string `json:"roninAddress" gorm:"column:ronin_address;index:idx_withdrawal_ronin_address;not null"`
-	RoninTokenAddress    string `json:"roninTokenAddress" gorm:"column:ronin_token_address;index:idx_withdrawal_ronin_token_address;not null"`
-	TokenErc             uint8  `json:"tokenERC" gorm:"column:token_erc;not null"`
-	TokenId              int64  `json:"tokenId" gorm:"column:token_id;not null"`
+	RecipientAddress     string `json:"roninAddress" gorm:"column:ronin_address;index:idx_withdrawal_receipt_address;not null"`
 	TokenQuantity        string `json:"tokenQuantity" gorm:"column:token_quantity;not null"`
 	Transaction          string `json:"transaction" gorm:"column:transaction;index:idx_withdrawal_transaction;not null"`
 }

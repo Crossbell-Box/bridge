@@ -3,6 +3,10 @@ package task
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"math/big"
+	"sort"
+	"time"
+
 	ethGovernance "github.com/axieinfinity/bridge-contracts/generated_contracts/ethereum/governance"
 	roninGovernance "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/governance"
 	roninTrustedOrganization "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/trusted_organization"
@@ -19,9 +23,6 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/signer/core"
-	"math/big"
-	"sort"
-	"time"
 )
 
 const (
@@ -153,9 +154,9 @@ func (r *task) voteBridgeOperatorsBySignature(task *models.Task) (doneTasks, pro
 		bridgeOperators = append(bridgeOperators, address.Hex())
 	}
 	opts := &signDataOpts{
-		SignTypedDataCallback: func(typedData core.TypedData) (hexutil.Bytes, error) {
-			return r.util.SignTypedData(typedData, r.listener.GetVoterSign())
-		},
+		// SignTypedDataCallback: func(typedData core.TypedData) (hexutil.Bytes, error) {
+		// 	return r.util.SignTypedData(typedData, r.listener.GetVoterSign())
+		// },
 	}
 	signature, err := signBridgeOperatorsBallot(opts, event.Period.Int64(), event.Epoch.Int64(), bridgeOperators)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	bridgeCoreStores "github.com/axieinfinity/bridge-core/stores"
 	"github.com/axieinfinity/bridge-core/utils"
 	"github.com/axieinfinity/bridge-v2/listener"
-	crossbellTask "github.com/axieinfinity/bridge-v2/task"
+	roninTask "github.com/axieinfinity/bridge-v2/task"
 	"github.com/ethereum/go-ethereum/log"
 	"gorm.io/gorm"
 )
@@ -20,7 +20,6 @@ type BridgeController struct {
 
 func NewBridgeController(cfg *bridgeCore.Config, db *gorm.DB, helpers utils.Utils) (*BridgeController, error) {
 	bridgeCore.AddListener("Ethereum", InitEthereum)
-	// bridgeCore.AddListener("Ronin", InitRonin)
 	bridgeCore.AddListener("Crossbell", InitCrossbell)
 	controller, err := bridgeCore.New(cfg, db, helpers)
 	if err != nil {
@@ -47,7 +46,7 @@ func InitRonin(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeC
 	}
 	metrics.Pusher.AddCounter(fmt.Sprintf(metrics.ListenerProcessedBlockMetric, roninListener.GetName()), "count number of processed block in ethereum listener")
 
-	task, err := crossbellTask.NewRoninTask(roninListener, store.GetDB(), helpers)
+	task, err := roninTask.NewRoninTask(roninListener, store.GetDB(), helpers)
 	if err != nil {
 		log.Error("[RoninListener][InitRonin] Error while adding new task", "err", err)
 		return nil
@@ -57,18 +56,18 @@ func InitRonin(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeC
 }
 
 func InitCrossbell(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeCoreStores.MainStore, helpers utils.Utils) bridgeCore.Listener {
-	crossbellListener, err := listener.NewCrossbellListener(ctx, lsConfig, helpers, store)
+	crossbellLinListener, err := listener.NewCrossbellListener(ctx, lsConfig, helpers, store)
 	if err != nil {
-		log.Error("[RoninListener]Error while init new Crossbell listener", "err", err)
+		log.Error("[CrossbellListener]Error while init new crossbell listener", "err", err)
 		return nil
 	}
-	metrics.Pusher.AddCounter(fmt.Sprintf(metrics.ListenerProcessedBlockMetric, crossbellListener.GetName()), "count number of processed block in ethereum listener")
+	metrics.Pusher.AddCounter(fmt.Sprintf(metrics.ListenerProcessedBlockMetric, crossbellLinListener.GetName()), "count number of processed block in ethereum listener")
 
-	task, err := crossbellTask.NewRoninTask(crossbellListener, store.GetDB(), helpers)
+	task, err := roninTask.NewRoninTask(crossbellLinListener, store.GetDB(), helpers)
 	if err != nil {
 		log.Error("[CrossbellListener][InitCrossbell] Error while adding new task", "err", err)
 		return nil
 	}
-	crossbellListener.AddTask(task)
-	return crossbellListener
+	crossbellLinListener.AddTask(task)
+	return crossbellLinListener
 }
