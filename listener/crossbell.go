@@ -21,7 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
-// const oneHour = 3600
+const oneHour = 3600
 
 type CrossbellListener struct {
 	*EthereumListener

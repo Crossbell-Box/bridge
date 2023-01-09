@@ -38,23 +38,6 @@ func InitEthereum(ctx context.Context, lsConfig *bridgeCore.LsConfig, store brid
 	return ethListener
 }
 
-func InitRonin(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeCoreStores.MainStore, helpers utils.Utils) bridgeCore.Listener {
-	roninListener, err := listener.NewRoninListener(ctx, lsConfig, helpers, store)
-	if err != nil {
-		log.Error("[RoninListener]Error while init new ronin listener", "err", err)
-		return nil
-	}
-	metrics.Pusher.AddCounter(fmt.Sprintf(metrics.ListenerProcessedBlockMetric, roninListener.GetName()), "count number of processed block in ethereum listener")
-
-	task, err := roninTask.NewRoninTask(roninListener, store.GetDB(), helpers)
-	if err != nil {
-		log.Error("[RoninListener][InitRonin] Error while adding new task", "err", err)
-		return nil
-	}
-	roninListener.AddTask(task)
-	return roninListener
-}
-
 func InitCrossbell(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeCoreStores.MainStore, helpers utils.Utils) bridgeCore.Listener {
 	crossbellLinListener, err := listener.NewCrossbellListener(ctx, lsConfig, helpers, store)
 	if err != nil {
