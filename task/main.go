@@ -6,6 +6,7 @@ const (
 	ACK_WITHDREW_TASK           = "acknowledgeWithdrew"
 	DEPOSIT_TASK                = "deposit"
 	WITHDRAWAL_TASK             = "withdrawal"
+	WITHDRAWAL_AGAIN_TASK       = "withdrawAgain"
 	VOTE_BRIDGE_OPERATORS_TASK  = "voteBridgeOperatorsBySignatures"
 	RELAY_BRIDGE_OPERATORS_TASK = "relayBridgeOperators"
 

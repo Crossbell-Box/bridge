@@ -85,27 +85,52 @@ func (l *CrossbellListener) IsUpTodate() bool {
 	return true
 }
 
-func (l *CrossbellListener) provideReceiptSignature(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte, isAgain bool) error {
-	// check database if receipt exist then do nothing
-	// Unpack event from data
+func (l *CrossbellListener) provideReceiptSignatureAgain(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	var eventName string
+	eventName = "RequestWithdrawalSignatures"
+	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawalSignatures)
+	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, eventName, data); err != nil {
+		return err
+	}
+	log.Info("[CrossbellListener][ProvideReceiptSignatureCallback] result of calling MainchainWithdrew function", "receiptId", crossbellEvent.WithdrawalId.Int64(), "tx", tx.GetHash().Hex())
+
+	// otherwise, create a task for submitting signature
+	// get chainID
+	chainId, err := l.GetChainID()
+	if err != nil {
+		return err
+	}
+	// create task and store to database
+	withdrawalTask := &models.Task{
+		ChainId:         hexutil.EncodeBig(chainId),
+		FromChainId:     hexutil.EncodeBig(fromChainId),
+		FromTransaction: tx.GetHash().Hex(),
+		Type:            task.WITHDRAWAL_AGAIN_TASK,
+		Data:            common.Bytes2Hex(data),
+		Retries:         0,
+		Status:          task.STATUS_PENDING,
+		LastError:       "",
+		CreatedAt:       time.Now().Unix(),
+	}
+	return l.bridgeStore.GetTaskStore().Save(withdrawalTask)
+}
+
+func (l *CrossbellListener) provideReceiptSignature(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	var eventName = "RequestWithdrawal"
 	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawal)
 	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
 	if err != nil {
 		return err
 	}
-
-	var eventName string
-	if isAgain {
-		eventName = "requestWithdrawalSignatures"
-	} else {
-		eventName = "requestWithdrawal"
-	}
-
 	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, eventName, data); err != nil {
 		return err
 	}
-
 	log.Info("[CrossbellListener][ProvideReceiptSignatureCallback] result of calling MainchainWithdrew function", "receiptId", crossbellEvent.WithdrawalId.Int64(), "tx", tx.GetHash().Hex())
+
 	// otherwise, create a task for submitting signature
 	// get chainID
 	chainId, err := l.GetChainID()
@@ -128,11 +153,11 @@ func (l *CrossbellListener) provideReceiptSignature(fromChainId *big.Int, tx bri
 }
 
 func (l *CrossbellListener) ProvideReceiptSignatureCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	return l.provideReceiptSignature(fromChainId, tx, data, false)
+	return l.provideReceiptSignature(fromChainId, tx, data)
 }
 
 func (l *CrossbellListener) ProvideReceiptSignatureAgainCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	return l.provideReceiptSignature(fromChainId, tx, data, true)
+	return l.provideReceiptSignatureAgain(fromChainId, tx, data)
 }
 
 func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
@@ -164,8 +189,10 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 	}
 
 	// check if current validator has been voted for this deposit or not
-	// TODO change big.NewInt(1) into ethEvent.chainId!!!!
-	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, big.NewInt(5), ethEvent.DepositId, l.GetValidatorSign().GetAddress())
+	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, chainId, ethEvent.DepositId, l.GetValidatorSign().GetAddress())
+	if err != nil {
+		return err
+	}
 	voted := int(big.NewInt(0).SetBytes(acknowledgementHash[:]).Uint64()) != 0
 	if voted {
 		return nil
