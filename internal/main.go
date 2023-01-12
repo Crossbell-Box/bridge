@@ -21,6 +21,7 @@ type BridgeController struct {
 func NewBridgeController(cfg *bridgeCore.Config, db *gorm.DB, helpers utils.Utils) (*BridgeController, error) {
 	bridgeCore.AddListener("Ethereum", InitEthereum)
 	bridgeCore.AddListener("Crossbell", InitCrossbell)
+	bridgeCore.AddListener("Binance", InitBinance)
 	controller, err := bridgeCore.New(cfg, db, helpers)
 	if err != nil {
 		return nil, err
@@ -39,6 +40,23 @@ func InitEthereum(ctx context.Context, lsConfig *bridgeCore.LsConfig, store brid
 }
 
 func InitCrossbell(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeCoreStores.MainStore, helpers utils.Utils) bridgeCore.Listener {
+	crossbellLinListener, err := listener.NewCrossbellListener(ctx, lsConfig, helpers, store)
+	if err != nil {
+		log.Error("[CrossbellListener]Error while init new crossbell listener", "err", err)
+		return nil
+	}
+	metrics.Pusher.AddCounter(fmt.Sprintf(metrics.ListenerProcessedBlockMetric, crossbellLinListener.GetName()), "count number of processed block in ethereum listener")
+
+	task, err := roninTask.NewRoninTask(crossbellLinListener, store.GetDB(), helpers)
+	if err != nil {
+		log.Error("[CrossbellListener][InitCrossbell] Error while adding new task", "err", err)
+		return nil
+	}
+	crossbellLinListener.AddTask(task)
+	return crossbellLinListener
+}
+
+func InitBinance(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeCoreStores.MainStore, helpers utils.Utils) bridgeCore.Listener {
 	crossbellLinListener, err := listener.NewCrossbellListener(ctx, lsConfig, helpers, store)
 	if err != nil {
 		log.Error("[CrossbellListener]Error while init new crossbell listener", "err", err)
