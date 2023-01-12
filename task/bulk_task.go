@@ -536,5 +536,7 @@ func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.B
 			VerifyingContract: r.contracts[MAINCHAIN_GATEWAY_CONTRACT],
 		},
 	}
-	return r.util.SignTypedData(typedData, receipt.chainId.Int64(), receipt.withdrawId.Int64(), receipt.recipient, receipt.token, receipt.amount.Int64(), receipt.fee.Int64(), r.listener.GetValidatorSign())
+	domainSeparator := r.listener.Config().DomainSeparator
+
+	return r.util.SignTypedData(typedData, domainSeparator, receipt.chainId.Int64(), receipt.withdrawId.Int64(), receipt.recipient, receipt.token, receipt.amount.Int64(), receipt.fee.Int64(), r.listener.GetValidatorSign())
 }
