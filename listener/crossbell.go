@@ -59,14 +59,38 @@ func (l *CrossbellListener) StoreMainchainWithdrewCallback(fromChainId *big.Int,
 	}
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetWithdrawalStore().Save(&models.Withdrawal{
-		WithdrawalId:         mainchainEvent.WithdrawalId.Int64(),
-		ExternalAddress:      tx.GetFromAddress(),        // from address (the address who submits the signatures into mainchain and gets the fee)
-		ExternalTokenAddress: mainchainEvent.Token.Hex(), // token address on mainchain
-		ExternalChainId:      mainchainEvent.ChainId.Int64(),
-		RecipientAddress:     mainchainEvent.Recipient.Hex(),
-		// RoninTokenAddress:    mainchainEvent.Token.Hex(), // how to get token address on crossbell
-		TokenQuantity: mainchainEvent.Amount.String(),
-		Transaction:   tx.GetHash().Hex(),
+		WithdrawalId:          mainchainEvent.WithdrawalId.Int64(),
+		MainChainId:           mainchainEvent.ChainId.Int64(),
+		RecipientAddress:      mainchainEvent.Recipient.Hex(), // from address (the address who submits the signatures into mainchain and gets the fee)
+		MainchainTokenAddress: mainchainEvent.Token.Hex(),     // token address on mainchain
+		TokenQuantity:         mainchainEvent.Amount.String(),
+		Fee:                   mainchainEvent.Fee.String(),
+		WithdrawerAddress:     tx.GetFromAddress(),
+		Transaction:           tx.GetHash().Hex(),
+	})
+}
+
+// StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
+func (l *CrossbellListener) StoreCrossbellDepositedCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	log.Info("[CrossbellListener] StoreCrossbellDepositedCallback", "tx", tx.GetHash().Hex())
+	crossbellEvent := new(crossbellGateway.CrossbellGatewayDeposited)
+	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
+
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "Deposited", data); err != nil {
+		return err
+	}
+	// store ronEvent to database at withdrawal
+	return l.bridgeStore.GetDepositStore().Save(&models.Deposit{
+		DepositId:             crossbellEvent.DepositId.Int64(),
+		MainChainId:           crossbellEvent.ChainId.Int64(),
+		RecipientAddress:      crossbellEvent.Recipient.Hex(), // from address (the address who submits the signatures into mainchain and gets the fee)
+		CrossbellTokenAddress: crossbellEvent.Token.Hex(),     // token address on mainchain
+		TokenQuantity:         crossbellEvent.Amount.String(),
+		FromAddress:           tx.GetFromAddress(),
+		Transaction:           tx.GetHash().Hex(),
 	})
 }
 
