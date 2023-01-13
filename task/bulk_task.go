@@ -91,10 +91,6 @@ func (r *bulkTask) send() {
 		r.sendBulkTransactions(r.sendDepositTransaction)
 	case WITHDRAWAL_TASK:
 		r.sendBulkTransactions(r.sendWithdrawalSignaturesTransaction)
-	case WITHDRAWAL_AGAIN_TASK:
-		r.sendBulkTransactions(r.sendWithdrawalSignaturesTransactionAgain)
-		// case ACK_WITHDREW_TASK:
-		// 	r.sendBulkTransactions(r.sendAckTransactions)
 	}
 }
 
@@ -221,85 +217,6 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 	return
 }
 
-func (r *bulkTask) sendWithdrawalSignaturesTransactionAgain(tasks []*models.Task) (doneTasks, processingTasks, failedTasks []*models.Task, tx *ethtypes.Transaction) {
-	var (
-		chainIds    []*big.Int
-		withdrawIds []*big.Int
-
-		signatures [][]byte
-	)
-	//create transactor
-	transactor, err := crossbellGateway.NewCrossbellGatewayTransactor(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
-	if err != nil {
-		// append all success tasks into failed tasks
-		for _, t := range tasks {
-			t.LastError = err.Error()
-			failedTasks = append(failedTasks, t)
-		}
-		return nil, nil, failedTasks, nil
-	}
-	// create caller
-	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
-	if err != nil {
-		// append all success tasks into failed tasks
-		for _, t := range tasks {
-			t.LastError = err.Error()
-			failedTasks = append(failedTasks, t)
-		}
-		return nil, nil, failedTasks, nil
-	}
-	for _, t := range tasks {
-		result, receipt, err := r.validateWithdrawalAgainTask(caller, t)
-		if err != nil {
-			t.LastError = err.Error()
-			failedTasks = append(failedTasks, t)
-			continue
-		}
-		if receipt.withdrawId != nil {
-			// store receiptId to processed receipt
-			if err := r.store.GetProcessedReceiptStore().Save(t.ID, receipt.withdrawId.Int64()); err != nil {
-				log.Error("[bulkTask][sendWithdrawalSignaturesTransaction] error while saving processed receipt", "err", err)
-			}
-		}
-		// if validated then do nothing and add to doneTasks
-		if result {
-			doneTasks = append(doneTasks, t)
-			continue
-		}
-		// otherwise add to processingTasks
-		sigs, err := r.signWithdrawalSignatures(receipt)
-		if err != nil {
-			t.LastError = err.Error()
-			failedTasks = append(failedTasks, t)
-			continue
-		}
-		processingTasks = append(processingTasks, t)
-		signatures = append(signatures, sigs)
-		withdrawIds = append(withdrawIds, receipt.withdrawId)
-		chainIds = append(chainIds, receipt.chainId)
-	}
-	metrics.Pusher.IncrCounter(metrics.WithdrawalTaskMetric, len(tasks))
-
-	if len(withdrawIds) > 0 {
-		tx, err = r.util.SendContractTransaction(r.listener.GetValidatorSign(), r.chainId, func(opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return transactor.BatchSubmitWithdrawalSignatures(opts, chainIds, withdrawIds, signatures)
-		})
-		if err != nil {
-			// append all success tasks into failed tasks
-			for _, t := range processingTasks {
-				t.LastError = err.Error()
-				if err.Error() == ErrNotBridgeOperator {
-					doneTasks = append(doneTasks, t)
-				} else {
-					failedTasks = append(failedTasks, t)
-				}
-			}
-			return doneTasks, nil, failedTasks, nil
-		}
-	}
-	return
-}
-
 func (r *bulkTask) sendWithdrawalSignaturesTransaction(tasks []*models.Task) (doneTasks, processingTasks, failedTasks []*models.Task, tx *ethtypes.Transaction) {
 	var (
 		chainIds    []*big.Int
@@ -406,39 +323,7 @@ func (r *bulkTask) validateDepositTask(caller *crossbellGateway.CrossbellGateway
 	if err != nil {
 		return false, depositReceipt{}, err
 	}
-	return voted, depositReceipt{big.NewInt(5), mainchainEvent.DepositId, mainchainEvent.Recipient, mainchainEvent.Token, mainchainEvent.Amount}, nil
-}
-
-// ValidateAckWithdrawalTask validates if:
-// - signer has been voted for a withdrawal or not
-// - withdrawal request is executed or not
-// returns true if withdraw is executed or voted
-// also returns receipt id
-func (r *bulkTask) validateAckWithdrawalTask(caller *crossbellGateway.CrossbellGatewayCaller, task *models.Task) (bool, *big.Int, error) {
-	// Unpack event data
-	mainchainEvent := new(mainchainGateway.MainchainGatewayWithdrew)
-	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
-	if err != nil {
-		return false, nil, err
-	}
-
-	if err = r.util.UnpackLog(*mainchainGatewayAbi, mainchainEvent, "Withdrew", common.Hex2Bytes(task.Data)); err != nil {
-		return false, nil, err
-	}
-
-	chainId, err := r.listener.GetChainID()
-	if err != nil {
-		return false, nil, err
-	}
-
-	// check if withdrew has been voted or not
-	// check if withdrew has been voted or not
-	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, chainId, mainchainEvent.WithdrawalId, r.listener.GetValidatorSign().GetAddress())
-	if err != nil {
-		return false, nil, err
-	}
-	voted := int(big.NewInt(0).SetBytes(acknowledgementHash[:]).Uint64()) == 0
-	return voted, mainchainEvent.WithdrawalId, nil
+	return voted, depositReceipt{mainchainEvent.ChainId, mainchainEvent.DepositId, mainchainEvent.Recipient, mainchainEvent.Token, mainchainEvent.Amount}, nil
 }
 
 // ValidateWithdrawalTask validates if:
@@ -453,23 +338,6 @@ func (r *bulkTask) validateWithdrawalTask(caller *crossbellGateway.CrossbellGate
 		return false, &withdrawReceipt{}, err
 	}
 	if err = r.util.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "RequestWithdrawal", common.Hex2Bytes(task.Data)); err != nil {
-		return false, &withdrawReceipt{}, err
-	}
-	return false, &withdrawReceipt{crossbellEvent.ChainId, crossbellEvent.WithdrawalId, crossbellEvent.Recipient, crossbellEvent.Token, crossbellEvent.Amount, crossbellEvent.Fee}, nil
-}
-
-// ValidateWithdrawalTask validates if:
-// - Withdrawal request is executed or not
-// returns true if it is executed
-// also returns transfer receipt
-func (r *bulkTask) validateWithdrawalAgainTask(caller *crossbellGateway.CrossbellGatewayCaller, task *models.Task) (bool, *withdrawReceipt, error) {
-	// Unpack event from data
-	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawalSignatures)
-	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
-	if err != nil {
-		return false, &withdrawReceipt{}, err
-	}
-	if err = r.util.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "RequestWithdrawalSignatures", common.Hex2Bytes(task.Data)); err != nil {
 		return false, &withdrawReceipt{}, err
 	}
 	return false, &withdrawReceipt{crossbellEvent.ChainId, crossbellEvent.WithdrawalId, crossbellEvent.Recipient, crossbellEvent.Token, crossbellEvent.Amount, crossbellEvent.Fee}, nil
