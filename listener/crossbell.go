@@ -85,11 +85,10 @@ func (l *CrossbellListener) StoreCrossbellDepositedCallback(fromChainId *big.Int
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetDepositStore().Save(&models.Deposit{
 		DepositId:             crossbellEvent.DepositId.Int64(),
-		MainChainId:           crossbellEvent.ChainId.Int64(),
+		MainchainId:           crossbellEvent.ChainId.Int64(),
 		RecipientAddress:      crossbellEvent.Recipient.Hex(), // from address (the address who submits the signatures into mainchain and gets the fee)
 		CrossbellTokenAddress: crossbellEvent.Token.Hex(),     // token address on mainchain
 		TokenQuantity:         crossbellEvent.Amount.String(),
-		FromAddress:           tx.GetFromAddress(),
 		Transaction:           tx.GetHash().Hex(),
 	})
 }
@@ -110,8 +109,7 @@ func (l *CrossbellListener) IsUpTodate() bool {
 }
 
 func (l *CrossbellListener) provideReceiptSignatureAgain(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	var eventName string
-	eventName = "RequestWithdrawalSignatures"
+	var eventName = "RequestWithdrawalSignatures"
 	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawalSignatures)
 	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
 	if err != nil {
