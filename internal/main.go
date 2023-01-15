@@ -22,6 +22,7 @@ func NewBridgeController(cfg *bridgeCore.Config, db *gorm.DB, helpers utils.Util
 	bridgeCore.AddListener("Ethereum", InitEthereum)
 	bridgeCore.AddListener("Crossbell", InitCrossbell)
 	bridgeCore.AddListener("Binance", InitBinance)
+	bridgeCore.AddListener("Polygon", InitPolygon)
 	controller, err := bridgeCore.New(cfg, db, helpers)
 	if err != nil {
 		return nil, err
@@ -57,18 +58,21 @@ func InitCrossbell(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bri
 }
 
 func InitBinance(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeCoreStores.MainStore, helpers utils.Utils) bridgeCore.Listener {
-	crossbellLinListener, err := listener.NewCrossbellListener(ctx, lsConfig, helpers, store)
+	binanceListener, err := listener.NewEthereumListener(ctx, lsConfig, helpers, store)
 	if err != nil {
-		log.Error("[CrossbellListener]Error while init new crossbell listener", "err", err)
+		log.Error("[BinanceListener]Error while init new binance listener", "err", err)
 		return nil
 	}
-	metrics.Pusher.AddCounter(fmt.Sprintf(metrics.ListenerProcessedBlockMetric, crossbellLinListener.GetName()), "count number of processed block in ethereum listener")
+	metrics.Pusher.AddCounter(fmt.Sprintf(metrics.ListenerProcessedBlockMetric, binanceListener.GetName()), "count number of processed block in ethereum listener")
+	return binanceListener
+}
 
-	task, err := roninTask.NewRoninTask(crossbellLinListener, store.GetDB(), helpers)
+func InitPolygon(ctx context.Context, lsConfig *bridgeCore.LsConfig, store bridgeCoreStores.MainStore, helpers utils.Utils) bridgeCore.Listener {
+	polygonListener, err := listener.NewEthereumListener(ctx, lsConfig, helpers, store)
 	if err != nil {
-		log.Error("[CrossbellListener][InitCrossbell] Error while adding new task", "err", err)
+		log.Error("[PolygonListener]Error while init new Polygon listener", "err", err)
 		return nil
 	}
-	crossbellLinListener.AddTask(task)
-	return crossbellLinListener
+	metrics.Pusher.AddCounter(fmt.Sprintf(metrics.ListenerProcessedBlockMetric, polygonListener.GetName()), "count number of processed block in ethereum listener")
+	return polygonListener
 }
