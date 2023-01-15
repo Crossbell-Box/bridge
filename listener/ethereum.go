@@ -41,8 +41,6 @@ type EthereumListener struct {
 	utilsWrapper    utils.Utils
 	client          utils.EthClient
 	validatorSign   bridgeCoreUtils.ISign
-	voterSign       bridgeCoreUtils.ISign
-	relayerSign     bridgeCoreUtils.ISign
 	store           stores.MainStore
 	listeners       map[string]bridgeCore.Listener
 
@@ -90,20 +88,6 @@ func NewEthereumListener(ctx context.Context, cfg *bridgeCore.LsConfig, helpers 
 		ethListener.validatorSign, err = bridgeCoreUtils.NewSignMethod(cfg.Secret.Validator)
 		if err != nil {
 			log.Error(fmt.Sprintf("[New%sListener] error while getting validator key", cfg.Name), "err", err)
-			return nil, err
-		}
-	}
-	if cfg.Secret.Voter != nil {
-		ethListener.voterSign, err = bridgeCoreUtils.NewSignMethod(cfg.Secret.Voter)
-		if err != nil {
-			log.Error(fmt.Sprintf("[New%sListener] error while getting voter key", cfg.Name), "err", err)
-			return nil, err
-		}
-	}
-	if cfg.Secret.Relayer != nil {
-		ethListener.relayerSign, err = bridgeCoreUtils.NewSignMethod(cfg.Secret.Relayer)
-		if err != nil {
-			log.Error(fmt.Sprintf("[New%sListener] error while getting relayer key", cfg.Name), "err", err)
 			return nil, err
 		}
 	}
@@ -396,12 +380,4 @@ func (e *EthereumListener) Close() {
 
 func (e *EthereumListener) GetValidatorSign() bridgeCoreUtils.ISign {
 	return e.validatorSign
-}
-
-func (e *EthereumListener) GetVoterSign() bridgeCoreUtils.ISign {
-	return e.voterSign
-}
-
-func (e *EthereumListener) GetRelayerSign() bridgeCoreUtils.ISign {
-	return e.relayerSign
 }

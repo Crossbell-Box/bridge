@@ -131,10 +131,6 @@ func setKeyFromEnv(cfg *bridgeCore.Config, isValidator bool, key, network string
 			cfg.Listeners[network].Secret.Validator = &bridgeCoreUtils.SignMethodConfig{
 				PlainPrivateKey: key,
 			}
-		} else {
-			cfg.Listeners[network].Secret.Relayer = &bridgeCoreUtils.SignMethodConfig{
-				PlainPrivateKey: key,
-			}
 		}
 	}
 }
@@ -143,10 +139,6 @@ func setKmsFromEnv(cfg *bridgeCore.Config, isValidator bool, config *kms.KmsConf
 	if _, ok := cfg.Listeners[network]; ok {
 		if isValidator {
 			cfg.Listeners[network].Secret.Validator = &bridgeCoreUtils.SignMethodConfig{
-				KmsConfig: config,
-			}
-		} else {
-			cfg.Listeners[network].Secret.Relayer = &bridgeCoreUtils.SignMethodConfig{
 				KmsConfig: config,
 			}
 		}
@@ -306,12 +298,6 @@ func checkEnv(cfg *bridgeCore.Config) {
 				SignTimeout:   int64(signTimeout),
 			}
 			setKmsFromEnv(cfg, false, config, RoninNetwork)
-		}
-
-		if os.Getenv(roninBridgeVoterKey) != "" {
-			cfg.Listeners[RoninNetwork].Secret.Voter = &bridgeCoreUtils.SignMethodConfig{
-				PlainPrivateKey: os.Getenv(roninBridgeVoterKey),
-			}
 		}
 	}
 

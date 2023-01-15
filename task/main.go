@@ -3,12 +3,10 @@ package task
 import "github.com/axieinfinity/bridge-v2/models"
 
 const (
-	ACK_WITHDREW_TASK           = "acknowledgeWithdrew"
-	DEPOSIT_TASK                = "deposit"
-	WITHDRAWAL_TASK             = "withdrawal"
-	WITHDRAWAL_AGAIN_TASK       = "withdrawAgain"
-	VOTE_BRIDGE_OPERATORS_TASK  = "voteBridgeOperatorsBySignatures"
-	RELAY_BRIDGE_OPERATORS_TASK = "relayBridgeOperators"
+	ACK_WITHDREW_TASK     = "acknowledgeWithdrew"
+	DEPOSIT_TASK          = "deposit"
+	WITHDRAWAL_TASK       = "withdrawal"
+	WITHDRAWAL_AGAIN_TASK = "withdrawAgain"
 
 	STATUS_PENDING    = "pending"
 	STATUS_FAILED     = "failed"
@@ -26,12 +24,6 @@ const (
 	CROSSBELL_VALIDATOR        = "CrossbellValidator"
 	MAINCHAIN_GATEWAY_CONTRACT = "MainchainGateway"
 	MAINCHAIN_VALIDATOR        = "MainchainValidator"
-)
-
-const (
-	VoteStatusPending = iota
-	VoteStatusApproved
-	VoteStatusExecuted
 )
 
 type Tasker interface {

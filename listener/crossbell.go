@@ -6,7 +6,6 @@ import (
 	"time"
 
 	crossbellGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/gateway"
-	crossbellValidator "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/governance"
 	mainchainGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/mainchain/gateway"
 	bridgeCore "github.com/axieinfinity/bridge-core"
 	bridgeCoreModels "github.com/axieinfinity/bridge-core/models"
@@ -15,7 +14,6 @@ import (
 	"github.com/axieinfinity/bridge-v2/models"
 	"github.com/axieinfinity/bridge-v2/stores"
 	"github.com/axieinfinity/bridge-v2/task"
-	bridgeUtils "github.com/axieinfinity/bridge-v2/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/log"
@@ -281,28 +279,6 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 		CreatedAt:       time.Now().Unix(),
 	}
 	return l.bridgeStore.GetTaskStore().Save(depositTask)
-}
-
-func (l *CrossbellListener) isValidatorNode() (bool, error) {
-	validatorSign := l.GetValidatorSign()
-	if validatorSign == nil {
-		log.Warn("The current node is not set validator key")
-		return false, nil
-	}
-
-	ethClient := l.GetListener(bridgeUtils.Ethereum).GetEthClient()
-	crossbellGovernanceCaller, err := crossbellValidator.NewValidatorCaller(common.HexToAddress(l.config.Contracts[task.CROSSBELL_VALIDATOR]), ethClient)
-	if err != nil {
-		return false, err
-	}
-
-	addr := validatorSign.GetAddress()
-	isRelayer, err := crossbellGovernanceCaller.IsValidator(nil, addr)
-	if err != nil {
-		return false, err
-	}
-
-	return isRelayer, nil
 }
 
 type CrossbellCallBackJob struct {

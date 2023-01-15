@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	internal "github.com/axieinfinity/bridge-core"
 	"github.com/axieinfinity/bridge-core/utils"
@@ -38,7 +39,6 @@ func newMockConfig(privateKey string, contracts map[string]string) *internal.LsC
 				PlainPrivateKey: privateKey,
 				KmsConfig:       nil,
 			},
-			Relayer: nil,
 		},
 		Contracts: contracts,
 		ChainId:   RoninChainId,
