@@ -1,64 +1,203 @@
 {
-    "listeners": {
-      "Ronin": {
-        "chainId": "0x4f",
-        "rpcUrl": "http://localhost:8546",
-        "blockTime": 15,
-        "safeBlockRange": 10,
-        "maxTasksQuery": 100,
-        "minTasksQuery": 20,
-        "taskInterval": 15,
-        "transactionCheckPeriod": 5,
-        "secret": {
-          "validator": {
-            "plainPrivateKey": ""
-          },
-          "voter": {
-            "plainPrivateKey": ""
-          },
-          "relayer": {
-            "plainPrivateKey": "5407c316392474bb25e9d440ad8086d978c212f72ed39cd116c676f481fecf42"
-          }
-        },
-        "fromHeight": 0,
-        "processWithinBlocks": 400,
-        "contracts": {
-          "CrossbellGateway": "0xe1a18b177C78387167Ae27994EECA795fac78353",
-          "Validator": ""
-        },
-        "subscriptions": {
+  "listeners": {
+    "Crossbell": {
+      "chainId": "0xAA36A7",
+      "rpcUrl": "http:xxxx",
+      "blockTime": 6,
+      "safeBlockRange": 8,
+      "maxTasksQuery": 1000,
+      "minTasksQuery": 50,
+      "taskInterval": 15,
+      "transactionCheckPeriod": 4,
+      "secret": {
+        "validator": {
+          "plainPrivateKey": "0x123123"
         }
       },
-      "Ethereum": {
-        "chainId": "0x539",
-        "rpcUrl": "http://127.0.0.1:8545",
-        "blockTime": 15,
-        "safeBlockRange": 8,
-        "transactionCheckPeriod": 5,
-        "secret": {
-          "validator": {
-            "plainPrivateKey": ""
+      "fromHeight": 2692900,
+      "contracts": {
+        "CrossbellGateway": "0x52A0C181D7f43EEF642e47DD45e97ca9777E1C95"
+      },
+      "subscriptions": {
+        "WithdrawalRequestedSubscription": {
+          "to": "0x52A0C181D7f43EEF642e47DD45e97ca9777E1C95",
+          "type": 1,
+          "handler": {
+            "contract": "CrossbellGateway",
+            "name": "RequestWithdrawal"
           },
-          "relayer": {
-            "plainPrivateKey": ""
+          "callbacks": {
+            "Crossbell": "ProvideReceiptSignatureCallback"
           }
         },
-        "fromHeight": 0,
-        "processWithinBlocks": 400,
-        "contracts": {
-          "MainchainGateway": "0xF68df71F99c9F622ef82cd4b704923b01461c33d",
-          "Validator": ""
+        "DepositedSubscription": {
+          "to": "0x52A0C181D7f43EEF642e47DD45e97ca9777E1C95",
+          "type": 1,
+          "handler": {
+            "contract": "CrossbellGateway",
+            "name": "Deposited"
+          },
+          "callbacks": {
+            "Crossbell": "StoreCrossbellDepositedCallback"
+          }
         },
-        "subscriptions": {
+        "SubmitSignaturesSubscription": {
+          "to": "0x52A0C181D7f43EEF642e47DD45e97ca9777E1C95",
+          "type": 1,
+          "handler": {
+            "contract": "CrossbellGateway",
+            "name": "SubmitWithdrawalSignatures"
+          },
+          "callbacks": {
+            "Crossbell": "StoreBatchSubmitWithdrawalSignatures"
+          }
+        },
+        "AckDepositSubscription": {
+          "to": "0x52A0C181D7f43EEF642e47DD45e97ca9777E1C95",
+          "type": 1,
+          "handler": {
+            "contract": "CrossbellGateway",
+            "name": "AckDeposit"
+          },
+          "callbacks": {
+            "Crossbell": "StoreDepositAck"
+          }
         }
       }
     },
-    "database": {
-      "host": "localhost",
-      "user": "ronin-bridge",
-      "password": "let-me-in",
-      "dbName": "myronin1",
-      "port": 5432,
-      "maxOpenConns": 50
+    "Ethereum": {
+      "disabled": false,
+      "chainId": "0x5",
+      "domainSeperator": "0xeb2a4fb584d0612bfba58fd063e643a30b6a38f81cc096aab2b508f45997002f",
+      "rpcUrl": "http:xxxx",
+      "blockTime": 4,
+      "safeBlockRange": 8,
+      "transactionCheckPeriod": 4,
+      "secret": {
+        "validator": {
+          "plainPrivateKey": "0x123123"
+        }
+      },
+      "fromHeight": 8315421,
+      "contracts": {
+        "MainchainGateway": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c"
+      },
+      "subscriptions": {
+        "DepositRequestedSubscription": {
+          "to": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c",
+          "type": 1,
+          "handler": {
+            "contract": "MainchainGateway",
+            "name": "RequestDeposit"
+          },
+          "callbacks": {
+            "Crossbell": "DepositRequestedCallback"
+          }
+        },
+        "WithdrewSubscription": {
+          "to": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c",
+          "type": 1,
+          "handler": {
+            "contract": "MainchainGateway",
+            "name": "Withdrew"
+          },
+          "callbacks": {
+            "Crossbell": "StoreMainchainWithdrewCallback"
+          }
+        }
+      }
+    },
+    "Binance": {
+      "disabled": false,
+      "chainId": "0x61",
+      "domainSeperator": "0xeb2a4fb584d0612bfba58fd063e643a30b6a38f81cc096aab2b508f45997002f",
+      "rpcUrl": "http:xxxx",
+      "blockTime": 4,
+      "safeBlockRange": 8,
+      "transactionCheckPeriod": 4,
+      "secret": {
+        "validator": {
+          "plainPrivateKey": "0x123123"
+        }
+      },
+      "fromHeight": 8315421,
+      "contracts": {
+        "MainchainGateway": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c"
+      },
+      "subscriptions": {
+        "DepositRequestedSubscription": {
+          "to": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c",
+          "type": 1,
+          "handler": {
+            "contract": "MainchainGateway",
+            "name": "RequestDeposit"
+          },
+          "callbacks": {
+            "Crossbell": "DepositRequestedCallback"
+          }
+        },
+        "WithdrewSubscription": {
+          "to": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c",
+          "type": 1,
+          "handler": {
+            "contract": "MainchainGateway",
+            "name": "Withdrew"
+          },
+          "callbacks": {
+            "Crossbell": "StoreMainchainWithdrewCallback"
+          }
+        }
+      }
+    },
+    "Polygon": {
+      "disabled": false,
+      "chainId": "0x5",
+      "domainSeperator": "0xeb2a4fb584d0612bfba58fd063e643a30b6a38f81cc096aab2b508f45997002f",
+      "rpcUrl": "http:xxxx",
+      "blockTime": 4,
+      "safeBlockRange": 8,
+      "transactionCheckPeriod": 4,
+      "secret": {
+        "validator": {
+          "plainPrivateKey": "0x123123"
+        }
+      },
+      "fromHeight": 8315421,
+      "contracts": {
+        "MainchainGateway": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c"
+      },
+      "subscriptions": {
+        "DepositRequestedSubscription": {
+          "to": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c",
+          "type": 1,
+          "handler": {
+            "contract": "MainchainGateway",
+            "name": "RequestDeposit"
+          },
+          "callbacks": {
+            "Crossbell": "DepositRequestedCallback"
+          }
+        },
+        "WithdrewSubscription": {
+          "to": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c",
+          "type": 1,
+          "handler": {
+            "contract": "MainchainGateway",
+            "name": "Withdrew"
+          },
+          "callbacks": {
+            "Crossbell": "StoreMainchainWithdrewCallback"
+          }
+        }
+      }
     }
+  },
+  "database": {
+    "host": "localhost",
+    "user": "ronin-bridge",
+    "password": "let-me-in",
+    "dbName": "relayer_database",
+    "port": 5432,
+    "maxOpenConns": 50
   }
+}
