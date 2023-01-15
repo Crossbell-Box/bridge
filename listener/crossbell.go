@@ -93,6 +93,50 @@ func (l *CrossbellListener) StoreCrossbellDepositedCallback(fromChainId *big.Int
 	})
 }
 
+// StoreCrossbellDepositedCallback stores the signatures to own database for future check from ProvideReceiptSignatureCallback
+func (l *CrossbellListener) StoreBatchSubmitWithdrawalSignatures(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	log.Info("[CrossbellListener] StoreBatchSubmitWithdrawalSignatures", "tx", tx.GetHash().Hex())
+	crossbellEvent := new(crossbellGateway.CrossbellGatewaySubmitWithdrawalSignature)
+	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
+
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "SubmitWithdrawalSignature", data); err != nil {
+		return err
+	}
+	// store ronEvent to database at withdrawal
+	return l.bridgeStore.GetWithdrawalSignaturesStore().Save(&models.WithdrawalSignatures{
+		MainchainId:      crossbellEvent.ChainId.Int64(),
+		WithdrawalId:     crossbellEvent.WithdrawalId.Int64(),
+		ValidatorAddress: crossbellEvent.Validator.Hex(), // from address (the address who submits the signatures into mainchain and gets the fee)
+		Signature:        string(crossbellEvent.Signature),
+		Transaction:      tx.GetHash().Hex(),
+	})
+}
+
+// StoreCrossbellDepositedCallback stores the signatures to own database for future check from ProvideReceiptSignatureCallback
+func (l *CrossbellListener) StoreDepositAck(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	log.Info("[CrossbellListener] StoreDepositAck", "tx", tx.GetHash().Hex())
+	crossbellEvent := new(crossbellGateway.CrossbellGatewayAckDeposit)
+	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
+
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "AckDeposit", data); err != nil {
+		return err
+	}
+	// store ronEvent to database at withdrawal
+	return l.bridgeStore.GetDepositAckStore().Save(&models.DepositAck{
+		MainchainId:      crossbellEvent.ChainId.Int64(),
+		DepositId:        crossbellEvent.DepositId.Int64(),
+		RecipientAddress: crossbellEvent.Recipient.Hex(),
+		ValidatorAddress: tx.GetFromAddress(), // from address (the address who submits the signatures into mainchain and gets the fee)
+		Transaction:      tx.GetHash().Hex(),
+	})
+}
+
 func (l *CrossbellListener) IsUpTodate() bool {
 	latestBlock, err := l.GetLatestBlock()
 	if err != nil {
@@ -184,6 +228,14 @@ func (l *CrossbellListener) ProvideReceiptSignatureAgainCallback(fromChainId *bi
 
 func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	log.Info("[CrossbellListener] DepositRequestedCallback", "tx", tx.GetHash().Hex())
+
+	// otherwise, create a task for submitting signature
+	// get chainID
+	chainId, err := l.GetChainID()
+	if err != nil {
+		return err
+	}
+
 	// check whether deposit is done or not
 	// Unpack event data
 	ethEvent := new(mainchainGateway.MainchainGatewayRequestDeposit)
@@ -200,18 +252,14 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 	if err != nil {
 		return err
 	}
-	// get chainID
-	chainId, err := l.GetChainID()
-	if err != nil {
-		return err
-	}
+
 	log.Info("[CrossbellListener][DepositRequestedCallback] result of calling DepositVoted function", "receiptId", ethEvent.DepositId, "tx", tx.GetHash().Hex())
 	if err != nil {
 		return err
 	}
 
 	// check if current validator has been voted for this deposit or not
-	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, chainId, ethEvent.DepositId, l.GetValidatorSign().GetAddress())
+	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, ethEvent.ChainId, ethEvent.DepositId, l.GetValidatorSign().GetAddress())
 	if err != nil {
 		return err
 	}

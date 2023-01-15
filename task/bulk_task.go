@@ -139,7 +139,6 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 		}
 		return nil, nil, failedTasks, nil
 	}
-
 	// create transactor
 	transactor, err := crossbellGateway.NewCrossbellGatewayTransactor(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
 	if err != nil {
@@ -174,15 +173,8 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 		// otherwise add task to processingTasks to adjust after sending transaction
 		processingTasks = append(processingTasks, t)
 
-		chainId, err := r.listener.GetChainID()
-		if err != nil {
-			t.LastError = err.Error()
-			failedTasks = append(failedTasks, t)
-			continue
-		}
-
 		// append new receipt into receipts slice
-		chainIds = append(chainIds, chainId)
+		chainIds = append(chainIds, receipt.chainId)
 		depositIds = append(depositIds, receipt.depositId)
 		recipients = append(recipients, receipt.recipient)
 		tokens = append(tokens, receipt.token)
@@ -312,13 +304,8 @@ func (r *bulkTask) validateDepositTask(caller *crossbellGateway.CrossbellGateway
 		return false, depositReceipt{}, err
 	}
 
-	chainId, err := r.listener.GetChainID()
-	if err != nil {
-		return false, depositReceipt{}, err
-	}
-
 	// check if current validator has been voted for this deposit or not
-	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, chainId, mainchainEvent.DepositId, r.listener.GetValidatorSign().GetAddress())
+	acknowledgementHash, err := caller.GetValidatorAcknowledgementHash(nil, mainchainEvent.ChainId, mainchainEvent.DepositId, r.listener.GetValidatorSign().GetAddress())
 	voted := int(big.NewInt(0).SetBytes(acknowledgementHash[:]).Uint64()) != 0
 	if err != nil {
 		return false, depositReceipt{}, err

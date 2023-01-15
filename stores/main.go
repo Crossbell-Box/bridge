@@ -29,30 +29,44 @@ type WithdrawalStore interface {
 	GetWithdrawalById(withdrawalId int64) (*models.Withdrawal, error)
 }
 
+type WithdrawalSignaturesStore interface {
+	Save(WithdrawalSignatures *models.WithdrawalSignatures) error
+}
+
+type DepositAckStore interface {
+	Save(DepositAck *models.DepositAck) error
+}
+
 type BridgeStore interface {
 	GetDepositStore() DepositStore
 	GetWithdrawalStore() WithdrawalStore
 	GetTaskStore() TaskStore
 	GetProcessedReceiptStore() ProcessedReceiptStore
+	GetWithdrawalSignaturesStore() WithdrawalSignaturesStore
+	GetDepositAckStore() DepositAckStore
 }
 
 type bridgeStore struct {
 	*gorm.DB
 
-	DepositStore          DepositStore
-	WithdrawalStore       WithdrawalStore
-	TaskStore             TaskStore
-	ProcessedReceiptStore ProcessedReceiptStore
+	DepositStore              DepositStore
+	WithdrawalStore           WithdrawalStore
+	TaskStore                 TaskStore
+	ProcessedReceiptStore     ProcessedReceiptStore
+	WithdrawalSignaturesStore WithdrawalSignaturesStore
+	DepositAckStore           DepositAckStore
 }
 
 func NewBridgeStore(db *gorm.DB) BridgeStore {
 	store := &bridgeStore{
 		DB: db,
 
-		TaskStore:             NewTaskStore(db),
-		DepositStore:          NewDepositStore(db),
-		WithdrawalStore:       NewWithdrawalStore(db),
-		ProcessedReceiptStore: NewProcessedReceiptStore(db),
+		TaskStore:                 NewTaskStore(db),
+		DepositStore:              NewDepositStore(db),
+		WithdrawalStore:           NewWithdrawalStore(db),
+		ProcessedReceiptStore:     NewProcessedReceiptStore(db),
+		WithdrawalSignaturesStore: NewWithdrawalSignaturesStore(db),
+		DepositAckStore:           NewDepositAckStore(db),
 	}
 	return store
 }
@@ -79,4 +93,12 @@ func (m *bridgeStore) GetTaskStore() TaskStore {
 
 func (m *bridgeStore) GetProcessedReceiptStore() ProcessedReceiptStore {
 	return m.ProcessedReceiptStore
+}
+
+func (m *bridgeStore) GetWithdrawalSignaturesStore() WithdrawalSignaturesStore {
+	return m.WithdrawalSignaturesStore
+}
+
+func (m *bridgeStore) GetDepositAckStore() DepositAckStore {
+	return m.DepositAckStore
 }
