@@ -130,7 +130,7 @@ func (l *CrossbellListener) StoreDepositAck(fromChainId *big.Int, tx bridgeCore.
 		MainchainId:      crossbellEvent.ChainId.Int64(),
 		DepositId:        crossbellEvent.DepositId.Int64(),
 		RecipientAddress: crossbellEvent.Recipient.Hex(),
-		ValidatorAddress: tx.GetFromAddress(), // from address (the address who submits the signatures into mainchain and gets the fee)
+		ValidatorAddress: crossbellEvent.Validator.Hex(), // from address (the address who submits the signatures into mainchain and gets the fee)
 		Transaction:      tx.GetHash().Hex(),
 	})
 }
@@ -148,39 +148,6 @@ func (l *CrossbellListener) IsUpTodate() bool {
 		return false
 	}
 	return true
-}
-
-func (l *CrossbellListener) provideReceiptSignatureAgain(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	var eventName = "RequestWithdrawalSignatures"
-	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawalSignatures)
-	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
-	if err != nil {
-		return err
-	}
-	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, eventName, data); err != nil {
-		return err
-	}
-	log.Info("[CrossbellListener][ProvideReceiptSignatureCallback] result of calling MainchainWithdrew function", "receiptId", crossbellEvent.WithdrawalId.Int64(), "tx", tx.GetHash().Hex())
-
-	// otherwise, create a task for submitting signature
-	// get chainID
-	chainId, err := l.GetChainID()
-	if err != nil {
-		return err
-	}
-	// create task and store to database
-	withdrawalTask := &models.Task{
-		ChainId:         hexutil.EncodeBig(chainId),
-		FromChainId:     hexutil.EncodeBig(fromChainId),
-		FromTransaction: tx.GetHash().Hex(),
-		Type:            task.WITHDRAWAL_AGAIN_TASK,
-		Data:            common.Bytes2Hex(data),
-		Retries:         0,
-		Status:          task.STATUS_PENDING,
-		LastError:       "",
-		CreatedAt:       time.Now().Unix(),
-	}
-	return l.bridgeStore.GetTaskStore().Save(withdrawalTask)
 }
 
 func (l *CrossbellListener) provideReceiptSignature(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
@@ -218,10 +185,6 @@ func (l *CrossbellListener) provideReceiptSignature(fromChainId *big.Int, tx bri
 
 func (l *CrossbellListener) ProvideReceiptSignatureCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	return l.provideReceiptSignature(fromChainId, tx, data)
-}
-
-func (l *CrossbellListener) ProvideReceiptSignatureAgainCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	return l.provideReceiptSignatureAgain(fromChainId, tx, data)
 }
 
 func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
