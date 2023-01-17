@@ -2,15 +2,15 @@ package task
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
 	"time"
 
 	roninGovernance "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/governance"
 
-	crossbellGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/gateway"
-	mainchainGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/mainchain/gateway"
+	crossbellGateway "github.com/axieinfinity/bridge-v2/generated_contracts/crossbellGateway"
+	mainchainGateway "github.com/axieinfinity/bridge-v2/generated_contracts/mainchainGateway"
 	"github.com/axieinfinity/bridge-v2/stores"
-	"github.com/ethereum/go-ethereum/signer/core"
 
 	bridgeCore "github.com/axieinfinity/bridge-core"
 	"github.com/axieinfinity/bridge-core/metrics"
@@ -19,10 +19,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/log"
+	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
 const (
@@ -53,11 +53,12 @@ type withdrawReceipt struct {
 }
 
 type depositReceipt struct {
-	chainId   *big.Int
-	depositId *big.Int
-	recipient common.Address
-	token     common.Address
-	amount    *big.Int
+	chainId     *big.Int
+	depositId   *big.Int
+	recipient   common.Address
+	token       common.Address
+	amount      *big.Int
+	depositHash [32]byte
 }
 
 func newBulkTask(listener bridgeCore.Listener, client *ethclient.Client, store stores.BridgeStore, chainId *big.Int, contracts map[string]string, ticker time.Duration, maxTry int, taskType string, releaseTasksCh chan int, util utils.Utils) *bulkTask {
@@ -123,12 +124,13 @@ func (r *bulkTask) sendBulkTransactions(sendTxs func(tasks []*models.Task) (done
 
 func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, processingTasks, failedTasks []*models.Task, tx *ethtypes.Transaction) {
 	var (
-		receipts   []depositReceipt
-		chainIds   []*big.Int
-		depositIds []*big.Int
-		recipients []common.Address
-		tokens     []common.Address
-		amounts    []*big.Int
+		receipts      []depositReceipt
+		chainIds      []*big.Int
+		depositIds    []*big.Int
+		recipients    []common.Address
+		tokens        []common.Address
+		amounts       []*big.Int
+		depositHashes [][32]byte
 	)
 	// create caller
 	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
@@ -179,12 +181,14 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 		recipients = append(recipients, receipt.recipient)
 		tokens = append(tokens, receipt.token)
 		amounts = append(amounts, receipt.amount)
+		depositHashes = append(depositHashes, receipt.depositHash)
 		receipts = append(receipts, depositReceipt{
-			chainId:   big.NewInt(5),
-			depositId: receipt.depositId,
-			recipient: receipt.recipient,
-			token:     receipt.token,
-			amount:    receipt.amount,
+			chainId:     big.NewInt(5),
+			depositId:   receipt.depositId,
+			recipient:   receipt.recipient,
+			token:       receipt.token,
+			amount:      receipt.amount,
+			depositHash: receipt.depositHash,
 		})
 	}
 	metrics.Pusher.IncrCounter(metrics.DepositTaskMetric, len(tasks))
@@ -192,7 +196,7 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 	if len(receipts) > 0 {
 
 		tx, err = r.util.SendContractTransaction(r.listener.GetValidatorSign(), r.chainId, func(opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return transactor.BatchAckDeposit(opts, chainIds, depositIds, recipients, tokens, amounts)
+			return transactor.BatchAckDeposit(opts, chainIds, depositIds, recipients, tokens, amounts, depositHashes)
 		})
 		if err != nil {
 			for _, t := range processingTasks {
@@ -310,7 +314,7 @@ func (r *bulkTask) validateDepositTask(caller *crossbellGateway.CrossbellGateway
 	if err != nil {
 		return false, depositReceipt{}, err
 	}
-	return voted, depositReceipt{mainchainEvent.ChainId, mainchainEvent.DepositId, mainchainEvent.Recipient, mainchainEvent.Token, mainchainEvent.Amount}, nil
+	return voted, depositReceipt{mainchainEvent.ChainId, mainchainEvent.DepositId, mainchainEvent.Recipient, mainchainEvent.Token, mainchainEvent.Amount, mainchainEvent.DepositHash}, nil
 }
 
 // ValidateWithdrawalTask validates if:
@@ -375,23 +379,44 @@ func parseSignatureAsRsv(signature []byte) roninGovernance.SignatureConsumerSign
 }
 
 func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.Bytes, error) {
-	typedData := core.TypedData{
-		Types: core.Types{
-			"EIP712Domain": []core.Type{
-				{Name: "name", Type: "string"},
-				{Name: "version", Type: "string"},
-				{Name: "chainId", Type: "uint256"},
-				{Name: "verifyingContract", Type: "address"},
-			},
-		},
-		Domain: core.TypedDataDomain{
-			Name:              "MainchainGateway",
-			Version:           "1",
-			ChainId:           math.NewHexOrDecimal256(receipt.chainId.Int64()),
-			VerifyingContract: r.contracts[MAINCHAIN_GATEWAY_CONTRACT],
-		},
-	}
 	domainSeparator := r.listener.Config().DomainSeparator
+	hash := solsha3.SoliditySHA3(
+		// types
+		[]string{"bytes32", "uint256", "uint256", "address", "address", "uint256", "uint256"},
 
-	return r.util.SignTypedData(typedData, domainSeparator, receipt.chainId.Int64(), receipt.withdrawId.Int64(), receipt.recipient, receipt.token, receipt.amount.Int64(), receipt.fee.Int64(), r.listener.GetValidatorSign())
+		// values
+		[]interface{}{
+			domainSeparator,
+			big.NewInt(receipt.chainId.Int64()),
+			big.NewInt(receipt.withdrawId.Int64()),
+			receipt.recipient,
+			receipt.token,
+			big.NewInt(receipt.amount.Int64()),
+			big.NewInt(receipt.fee.Int64()),
+		},
+	)
+
+	rawData := concatByteSlices(
+		[]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%v", len(hash))),
+		hash,
+	)
+
+	signature, err := r.listener.GetValidatorSign().Sign(rawData, "non-ether")
+	if err != nil {
+		return nil, err
+	}
+
+	signature[64] += 27 // Transform V from 0/1 to 27/28 according to the yellow paper
+	fmt.Println("the signature is : ", fmt.Sprintf("0x%x", signature))
+	return signature, nil
+}
+
+func concatByteSlices(arrays ...[]byte) []byte {
+	var result []byte
+
+	for _, b := range arrays {
+		result = append(result, b...)
+	}
+
+	return result
 }
