@@ -1,0 +1,225 @@
+{
+    "listeners": {
+      "Crossbell": {
+        "chainId": "0xAA36A7",
+        "rpcUrl": "",
+        "blockTime": 6,
+        "safeBlockRange": 8,
+        "maxTasksQuery": 1000,
+        "minTasksQuery": 50,
+        "taskInterval": 15,
+        "transactionCheckPeriod": 4,
+        "secret": {
+          "validator": {
+            "plainPrivateKey": ""
+          }
+        },
+        "fromHeight": 2692881,
+        "contracts": {
+          "CrossbellGateway": "0x335ba596B0C8B0eDE2002b357df67775D82B0C3A"
+        },
+        "subscriptions": {
+          "WithdrawalRequestedSubscription": {
+            "to": "0x335ba596B0C8B0eDE2002b357df67775D82B0C3A",
+            "type": 1,
+            "handler": {
+              "contract": "CrossbellGateway",
+              "name": "RequestWithdrawal"
+            },
+            "callbacks": {
+              "Crossbell": "ProvideReceiptSignatureCallback"
+            }
+          },
+          "RequestWithdrawalSubscription": {
+            "to": "0x335ba596B0C8B0eDE2002b357df67775D82B0C3A",
+            "type": 1,
+            "handler": {
+              "contract": "CrossbellGateway",
+              "name": "RequestWithdrawal"
+            },
+            "callbacks": {
+              "Crossbell": "StoreRequestWithdrawal"
+            }
+          },
+          "DepositedSubscription": {
+            "to": "0x335ba596B0C8B0eDE2002b357df67775D82B0C3A",
+            "type": 1,
+            "handler": {
+              "contract": "CrossbellGateway",
+              "name": "Deposited"
+            },
+            "callbacks": {
+              "Crossbell": "StoreCrossbellDepositedCallback"
+            }
+          },
+          "SubmitSignaturesSubscription": {
+            "to": "0x335ba596B0C8B0eDE2002b357df67775D82B0C3A",
+            "type": 1,
+            "handler": {
+              "contract": "CrossbellGateway",
+              "name": "SubmitWithdrawalSignatures"
+            },
+            "callbacks": {
+              "Crossbell": "StoreBatchSubmitWithdrawalSignatures"
+            }
+          },
+          "AckDepositSubscription": {
+            "to": "0x335ba596B0C8B0eDE2002b357df67775D82B0C3A",
+            "type": 1,
+            "handler": {
+              "contract": "CrossbellGateway",
+              "name": "AckDeposit"
+            },
+            "callbacks": {
+              "Crossbell": "StoreDepositAck"
+            }
+          }
+        }
+      },
+      "Ethereum": {
+        "disabled": false,
+        "chainId": "0x5",
+        "domainSeperator": "0xeb2a4fb584d0612bfba58fd063e643a30b6a38f81cc096aab2b508f45997002f",
+        "rpcUrl": "",
+        "blockTime": 4,
+        "safeBlockRange": 8,
+        "transactionCheckPeriod": 4,
+        "secret": {
+            "validator": {
+              "plainPrivateKey": ""
+            }
+        },
+        "fromHeight": 8321857,
+        "contracts": {
+          "MainchainGateway": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c"
+        },
+        "subscriptions": {
+          "DepositRequestedSubscription": {
+            "to": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c",
+            "type": 1,
+            "handler": {
+              "contract": "MainchainGateway",
+              "name": "RequestDeposit"
+            },
+            "callbacks": {
+              "Crossbell": "StoreRequestDeposit"
+            }
+          },
+          "WithdrewSubscription": {
+            "to": "0x462074b85c3bD27721FaF01be6600D5d7Bf49A7c",
+            "type": 1,
+            "handler": {
+              "contract": "MainchainGateway",
+              "name": "Withdrew"
+            },
+            "callbacks": {
+              "Crossbell": "StoreMainchainWithdrewCallback"
+            }
+          }
+        }
+      },
+      "Binance": {
+        "disabled": true,
+        "chainId": "0x61",
+        "domainSeperator": "0x40b3eebc91523361492b13a1d88ec919badbfa3f096f4f14c1504c96d9ccef15",
+        "rpcUrl": "",
+        "blockTime": 4,
+        "safeBlockRange": 8,
+        "transactionCheckPeriod": 4,
+        "secret": {
+            "validator": {
+              "plainPrivateKey": ""
+            }
+        },
+        "fromHeight": 26343331,
+        "contracts": {
+          "MainchainGateway": "0x26E8166b41d1c0E89F2a6d97Be8eB8f8c7337384"
+        },
+        "subscriptions": {
+          "DepositRequestedSubscription": {
+            "to": "0x26E8166b41d1c0E89F2a6d97Be8eB8f8c7337384",
+            "type": 1,
+            "handler": {
+              "contract": "MainchainGateway",
+              "name": "RequestDeposit"
+            },
+            "callbacks": {
+              "Crossbell": "DepositRequestedCallback"
+            }
+          },
+          "WithdrewSubscription": {
+            "to": "0x26E8166b41d1c0E89F2a6d97Be8eB8f8c7337384",
+            "type": 1,
+            "handler": {
+              "contract": "MainchainGateway",
+              "name": "Withdrew"
+            },
+            "callbacks": {
+              "Crossbell": "StoreMainchainWithdrewCallback"
+            }
+          }
+        }
+      },
+      "Polygon": {
+        "disabled": true,
+        "chainId": "0x13881",
+        "domainSeperator": "0xa65e0de2c6adaccb3ca06feeed6fcd92dcc99934d9c4fa18b74bafbd77f2ac26",
+        "rpcUrl": "http:xxxx",
+        "blockTime": 4,
+        "safeBlockRange": 8,
+        "transactionCheckPeriod": 4,
+        "secret": {
+          "validator": {
+            "plainPrivateKey": ""
+          }
+        },
+        "fromHeight": 30928865,
+        "contracts": {
+          "MainchainGateway": "0xe0Bd0128e1a1F947a8963889451eDe875e357A3a"
+        },
+        "subscriptions": {
+          "DepositRequestedSubscription": {
+            "to": "0xe0Bd0128e1a1F947a8963889451eDe875e357A3a",
+            "type": 1,
+            "handler": {
+              "contract": "MainchainGateway",
+              "name": "RequestDeposit"
+            },
+            "callbacks": {
+              "Crossbell": "DepositRequestedCallback"
+            }
+          },
+          "WithdrewSubscription": {
+            "to": "0xe0Bd0128e1a1F947a8963889451eDe875e357A3a",
+            "type": 1,
+            "handler": {
+              "contract": "MainchainGateway",
+              "name": "Withdrew"
+            },
+            "callbacks": {
+              "Crossbell": "StoreMainchainWithdrewCallback"
+            }
+          },
+          "RequestDepositSubscription": {
+            "to": "0xe0Bd0128e1a1F947a8963889451eDe875e357A3a",
+            "type": 1,
+            "handler": {
+              "contract": "MainchainGateway",
+              "name": "RequestDeposit"
+            },
+            "callbacks": {
+              "Crossbell": "StoreRequestDeposit"
+            }
+          }
+        }
+      }
+    },
+    "database": {
+      "host": "localhost",
+      "user": "postgres",
+      "password": "postgres",
+      "dbName": "indexer",
+      "port": 5432,
+      "maxOpenConns": 50
+    }
+  }

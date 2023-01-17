@@ -135,6 +135,53 @@ func (l *CrossbellListener) StoreDepositAck(fromChainId *big.Int, tx bridgeCore.
 	})
 }
 
+// StoreCrossbellDepositedCallback stores the signatures to own database for future check from ProvideReceiptSignatureCallback
+func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	log.Info("[CrossbellListener] StoreRequestWithdrawal", "tx", tx.GetHash().Hex())
+	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawal)
+	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
+
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "RequestWithdrawal", data); err != nil {
+		return err
+	}
+	// store ronEvent to database at withdrawal
+	return l.bridgeStore.GetRequestWithdrawalStore().Save(&models.RequestWithdrawal{
+		MainChainId:           crossbellEvent.ChainId.Int64(),
+		WithdrawalId:          crossbellEvent.WithdrawalId.Int64(),
+		RecipientAddress:      crossbellEvent.Recipient.Hex(),
+		MainchainTokenAddress: crossbellEvent.Token.Hex(), // token address on mainchain
+		TokenQuantity:         crossbellEvent.Amount.String(),
+		Fee:                   crossbellEvent.Fee.String(),
+		Transaction:           tx.GetHash().Hex(),
+	})
+}
+
+// StoreCrossbellDepositedCallback stores the signatures to own database for future check from ProvideReceiptSignatureCallback
+func (l *CrossbellListener) StoreRequestDeposit(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	log.Info("[CrossbellListener] StoreRequestDeposit", "tx", tx.GetHash().Hex())
+	mainchainEvent := new(mainchainGateway.MainchainGatewayRequestDeposit)
+	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
+
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, mainchainEvent, "RequestDeposit", data); err != nil {
+		return err
+	}
+	// store ronEvent to database at withdrawal
+	return l.bridgeStore.GetRequestDepositStore().Save(&models.RequestDeposit{
+		MainchainId:           mainchainEvent.ChainId.Int64(),
+		DepositId:             mainchainEvent.DepositId.Int64(),
+		RecipientAddress:      mainchainEvent.Recipient.Hex(),
+		CrossbellTokenAddress: mainchainEvent.Token.Hex(), // token address on mainchain
+		TokenQuantity:         mainchainEvent.Amount.String(),
+		Transaction:           tx.GetHash().Hex(),
+	})
+}
+
 func (l *CrossbellListener) IsUpTodate() bool {
 	latestBlock, err := l.GetLatestBlock()
 	if err != nil {
@@ -209,7 +256,7 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 		return err
 	}
 	// create caller
-	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(l.config.Contracts[task.CROSSBELL_GATEWAY_CONTRACT]), l.client)
+	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(l.config.Contracts[task.ETH_GATEWAY_CONTRACT]), l.client)
 	if err != nil {
 		return err
 	}

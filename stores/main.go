@@ -18,6 +18,13 @@ type TaskStore interface {
 type DepositStore interface {
 	Save(deposit *models.Deposit) error
 }
+type RequestDepositStore interface {
+	Save(requestDeposit *models.RequestDeposit) error
+}
+
+type RequestWithdrawalStore interface {
+	Save(RequestWithdrawal *models.RequestWithdrawal) error
+}
 
 type ProcessedReceiptStore interface {
 	Save(taskId int, receiptId int64) error
@@ -44,6 +51,8 @@ type BridgeStore interface {
 	GetProcessedReceiptStore() ProcessedReceiptStore
 	GetWithdrawalSignaturesStore() WithdrawalSignaturesStore
 	GetDepositAckStore() DepositAckStore
+	GetRequestDepositStore() RequestDepositStore
+	GetRequestWithdrawalStore() RequestWithdrawalStore
 }
 
 type bridgeStore struct {
@@ -55,6 +64,8 @@ type bridgeStore struct {
 	ProcessedReceiptStore     ProcessedReceiptStore
 	WithdrawalSignaturesStore WithdrawalSignaturesStore
 	DepositAckStore           DepositAckStore
+	RequestDepositStore       RequestDepositStore
+	RequestWithdrawalStore    RequestWithdrawalStore
 }
 
 func NewBridgeStore(db *gorm.DB) BridgeStore {
@@ -67,6 +78,8 @@ func NewBridgeStore(db *gorm.DB) BridgeStore {
 		ProcessedReceiptStore:     NewProcessedReceiptStore(db),
 		WithdrawalSignaturesStore: NewWithdrawalSignaturesStore(db),
 		DepositAckStore:           NewDepositAckStore(db),
+		RequestDepositStore:       NewRequestDepositStore(db),
+		RequestWithdrawalStore:    NewRequestWithdrawalStore(db),
 	}
 	return store
 }
@@ -85,6 +98,14 @@ func (m *bridgeStore) GetDepositStore() DepositStore {
 
 func (m *bridgeStore) GetWithdrawalStore() WithdrawalStore {
 	return m.WithdrawalStore
+}
+
+func (m *bridgeStore) GetRequestDepositStore() RequestDepositStore {
+	return m.RequestDepositStore
+}
+
+func (m *bridgeStore) GetRequestWithdrawalStore() RequestWithdrawalStore {
+	return m.RequestWithdrawalStore
 }
 
 func (m *bridgeStore) GetTaskStore() TaskStore {
