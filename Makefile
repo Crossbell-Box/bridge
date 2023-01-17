@@ -16,6 +16,7 @@ bridge:
 abigen:
 	mkdir -p build/contract/
 	cd crossbell-bridge-contracts/ && \
+	git pull && \
 	yarn && \
 	make install && \
 	forge inspect MainchainGateway abi > ../build/contract/MainchainGateway.abi && \

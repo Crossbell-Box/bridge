@@ -53,11 +53,12 @@ type withdrawReceipt struct {
 }
 
 type depositReceipt struct {
-	chainId   *big.Int
-	depositId *big.Int
-	recipient common.Address
-	token     common.Address
-	amount    *big.Int
+	chainId     *big.Int
+	depositId   *big.Int
+	recipient   common.Address
+	token       common.Address
+	amount      *big.Int
+	depositHash [32]byte
 }
 
 func newBulkTask(listener bridgeCore.Listener, client *ethclient.Client, store stores.BridgeStore, chainId *big.Int, contracts map[string]string, ticker time.Duration, maxTry int, taskType string, releaseTasksCh chan int, util utils.Utils) *bulkTask {
@@ -123,12 +124,13 @@ func (r *bulkTask) sendBulkTransactions(sendTxs func(tasks []*models.Task) (done
 
 func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, processingTasks, failedTasks []*models.Task, tx *ethtypes.Transaction) {
 	var (
-		receipts   []depositReceipt
-		chainIds   []*big.Int
-		depositIds []*big.Int
-		recipients []common.Address
-		tokens     []common.Address
-		amounts    []*big.Int
+		receipts      []depositReceipt
+		chainIds      []*big.Int
+		depositIds    []*big.Int
+		recipients    []common.Address
+		tokens        []common.Address
+		amounts       []*big.Int
+		depositHashes [][32]byte
 	)
 	// create caller
 	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(r.contracts[CROSSBELL_GATEWAY_CONTRACT]), r.client)
@@ -179,12 +181,14 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 		recipients = append(recipients, receipt.recipient)
 		tokens = append(tokens, receipt.token)
 		amounts = append(amounts, receipt.amount)
+		depositHashes = append(depositHashes, receipt.depositHash)
 		receipts = append(receipts, depositReceipt{
-			chainId:   big.NewInt(5),
-			depositId: receipt.depositId,
-			recipient: receipt.recipient,
-			token:     receipt.token,
-			amount:    receipt.amount,
+			chainId:     big.NewInt(5),
+			depositId:   receipt.depositId,
+			recipient:   receipt.recipient,
+			token:       receipt.token,
+			amount:      receipt.amount,
+			depositHash: receipt.depositHash,
 		})
 	}
 	metrics.Pusher.IncrCounter(metrics.DepositTaskMetric, len(tasks))
@@ -192,7 +196,7 @@ func (r *bulkTask) sendDepositTransaction(tasks []*models.Task) (doneTasks, proc
 	if len(receipts) > 0 {
 
 		tx, err = r.util.SendContractTransaction(r.listener.GetValidatorSign(), r.chainId, func(opts *bind.TransactOpts) (*ethtypes.Transaction, error) {
-			return transactor.BatchAckDeposit(opts, chainIds, depositIds, recipients, tokens, amounts)
+			return transactor.BatchAckDeposit(opts, chainIds, depositIds, recipients, tokens, amounts, depositHashes)
 		})
 		if err != nil {
 			for _, t := range processingTasks {
@@ -310,7 +314,7 @@ func (r *bulkTask) validateDepositTask(caller *crossbellGateway.CrossbellGateway
 	if err != nil {
 		return false, depositReceipt{}, err
 	}
-	return voted, depositReceipt{mainchainEvent.ChainId, mainchainEvent.DepositId, mainchainEvent.Recipient, mainchainEvent.Token, mainchainEvent.Amount}, nil
+	return voted, depositReceipt{mainchainEvent.ChainId, mainchainEvent.DepositId, mainchainEvent.Recipient, mainchainEvent.Token, mainchainEvent.Amount, mainchainEvent.DepositHash}, nil
 }
 
 // ValidateWithdrawalTask validates if:
