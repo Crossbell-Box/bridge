@@ -2,6 +2,7 @@ package task
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	crossbellGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/gateway"
 	mainchainGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/mainchain/gateway"
 	"github.com/axieinfinity/bridge-v2/stores"
-	"github.com/ethereum/go-ethereum/signer/core"
 
 	bridgeCore "github.com/axieinfinity/bridge-core"
 	"github.com/axieinfinity/bridge-core/metrics"
@@ -19,10 +19,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/log"
+	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
 const (
@@ -375,23 +375,44 @@ func parseSignatureAsRsv(signature []byte) roninGovernance.SignatureConsumerSign
 }
 
 func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.Bytes, error) {
-	typedData := core.TypedData{
-		Types: core.Types{
-			"EIP712Domain": []core.Type{
-				{Name: "name", Type: "string"},
-				{Name: "version", Type: "string"},
-				{Name: "chainId", Type: "uint256"},
-				{Name: "verifyingContract", Type: "address"},
-			},
-		},
-		Domain: core.TypedDataDomain{
-			Name:              "MainchainGateway",
-			Version:           "1",
-			ChainId:           math.NewHexOrDecimal256(receipt.chainId.Int64()),
-			VerifyingContract: r.contracts[MAINCHAIN_GATEWAY_CONTRACT],
-		},
-	}
 	domainSeparator := r.listener.Config().DomainSeparator
+	hash := solsha3.SoliditySHA3(
+		// types
+		[]string{"bytes32", "uint256", "uint256", "address", "address", "uint256", "uint256"},
 
-	return r.util.SignTypedData(typedData, domainSeparator, receipt.chainId.Int64(), receipt.withdrawId.Int64(), receipt.recipient, receipt.token, receipt.amount.Int64(), receipt.fee.Int64(), r.listener.GetValidatorSign())
+		// values
+		[]interface{}{
+			domainSeparator,
+			big.NewInt(receipt.chainId.Int64()),
+			big.NewInt(receipt.withdrawId.Int64()),
+			receipt.recipient,
+			receipt.token,
+			big.NewInt(receipt.amount.Int64()),
+			big.NewInt(receipt.fee.Int64()),
+		},
+	)
+
+	rawData := concatByteSlices(
+		[]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%v", len(hash))),
+		hash,
+	)
+
+	signature, err := r.listener.GetValidatorSign().Sign(rawData, "non-ether")
+	if err != nil {
+		return nil, err
+	}
+
+	signature[64] += 27 // Transform V from 0/1 to 27/28 according to the yellow paper
+	fmt.Println("the signature is : ", fmt.Sprintf("0x%x", signature))
+	return signature, nil
+}
+
+func concatByteSlices(arrays ...[]byte) []byte {
+	var result []byte
+
+	for _, b := range arrays {
+		result = append(result, b...)
+	}
+
+	return result
 }
