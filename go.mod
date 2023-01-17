@@ -26,18 +26,21 @@ require (
 )
 
 require (
-	github.com/Crossbell-Box/bridge-contracts v0.0.0-20230116152603-ae6c94b86c68
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/axieinfinity/bridge-contracts v0.0.0-20230104065322-79fcfb13708f
+	github.com/axieinfinity/bridge-contracts v0.0.0-20230111072442-13fb0177332d
 	github.com/axieinfinity/bridge-core v0.1.2-0.20221221074635-375d6a0ea127
 	github.com/axieinfinity/bridge-migrations v0.0.0-20220803051308-adab1cd1bcca
 	github.com/axieinfinity/bridge-v2 v0.0.0-20230104084244-52f7709e109d
 	github.com/axieinfinity/ronin-kms-client v0.0.0-20220805072849-960e04981b70
 	github.com/ethereum/go-ethereum v1.10.21
+	github.com/miguelmota/go-solidity-sha3 v0.1.1
 	gorm.io/driver/postgres v1.4.5
 )
 
+require github.com/Crossbell-Box/bridge-contracts v0.0.0-20230116152603-ae6c94b86c68 // indirect
+
 require (
+	// github.com/Crossbell-Box/bridge-contracts v0.0.0-20230116152603-ae6c94b86c68 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
@@ -73,7 +76,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mattn/go-sqlite3 v1.14.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/miguelmota/go-solidity-sha3 v0.1.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/mitchellh/pointerstructure v1.2.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

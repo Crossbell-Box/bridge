@@ -8,8 +8,8 @@ import (
 
 	roninGovernance "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/governance"
 
-	crossbellGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/crossbell/gateway"
-	mainchainGateway "github.com/Crossbell-Box/bridge-contracts/generated_contracts/mainchain/gateway"
+	crossbellGateway "github.com/axieinfinity/bridge-v2/generated_contracts/crossbellGateway"
+	mainchainGateway "github.com/axieinfinity/bridge-v2/generated_contracts/mainchainGateway"
 	"github.com/axieinfinity/bridge-v2/stores"
 
 	bridgeCore "github.com/axieinfinity/bridge-core"
