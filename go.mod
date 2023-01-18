@@ -1,6 +1,6 @@
 module github.com/Crossbell-Box/bridge
 
-replace github.com/ethereum/go-ethereum => ../ronin
+replace github.com/ethereum/go-ethereum => github.com/axieinfinity/ronin v1.10.4-0.20221219041825-4abacb213d22
 
 replace github.com/axieinfinity/bridge-v2 => ./
 
