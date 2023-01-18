@@ -54,8 +54,10 @@ github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/allegro/bigcache v1.2.1-0.20190218064605-e24eb225f156 h1:eMwmnE/GDgah4HI848JfFxHt+iPb26b4zyfspmqY0/8=
 github.com/allegro/bigcache v1.2.1-0.20190218064605-e24eb225f156/go.mod h1:Cb/ax3seSYIx7SuZdm2G2xzfwmv3TPSk2ucNfQESPXM=
-github.com/axieinfinity/bridge-contracts v0.0.0-20230104065322-79fcfb13708f h1:WuUwnSwyPwZkMsyGxLSfQXw8dGtDDusaf3qOIrAOL80=
-github.com/axieinfinity/bridge-contracts v0.0.0-20230104065322-79fcfb13708f/go.mod h1:/1xWUM5AIZGYgaFxl9ojlw3tCgeWF4SDg8qrzx5YHwk=
+github.com/axieinfinity/bridge-contracts v0.0.0-20230111072442-13fb0177332d h1:vADn0MwNuNYhmUMh31FMvzmSjLtiO6WVpXfhNEy+s3o=
+github.com/axieinfinity/bridge-contracts v0.0.0-20230111072442-13fb0177332d/go.mod h1:/1xWUM5AIZGYgaFxl9ojlw3tCgeWF4SDg8qrzx5YHwk=
+github.com/axieinfinity/ronin v1.10.4-0.20221219041825-4abacb213d22 h1:b1NS6KGmzodjri34EQH84RXCw6X//rqDNIuApZsNXDs=
+github.com/axieinfinity/ronin v1.10.4-0.20221219041825-4abacb213d22/go.mod h1:nl6ufMy9T1HMR4d1WoENxQYUmz4MijFg46566et+ydA=
 github.com/axieinfinity/ronin-kms-client v0.0.0-20220805072849-960e04981b70 h1:4MMSxt0Ce9cCN/XB+ESc/JllU1/jklFiIsWG4gq2y+g=
 github.com/axieinfinity/ronin-kms-client v0.0.0-20220805072849-960e04981b70/go.mod h1:mU3WoP8bi4bB/GhbwTTojFb7B8HK37E91rM1qes1+wg=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
