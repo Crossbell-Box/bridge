@@ -36,6 +36,9 @@ const (
 	ethereumRelayerKey   = "ETHEREUM_RELAYER_KEY"
 	verbosity            = "VERBOSITY"
 
+	roninValidatorKeystorePath = "RONIN_VALIDATOR_KEYSTORE_PATH"
+	roninValidatorPassword     = "RONIN_VALIDATOR_PASSWORD"
+
 	roninValidatorKmsKeyTokenPath = "RONIN_VALIDATOR_KMS_KEY_TOKEN_PATH"
 	roninValidatorKmsSslCertPath  = "RONIN_VALIDATOR_KMS_SSL_CERT_PATH"
 	roninValidatorKmsServerAddr   = "RONIN_VALIDATOR_KMS_SERVER_ADDR"
@@ -130,6 +133,16 @@ func setKeyFromEnv(cfg *bridgeCore.Config, isValidator bool, key, network string
 		if isValidator {
 			cfg.Listeners[network].Secret.Validator = &bridgeCoreUtils.SignMethodConfig{
 				PlainPrivateKey: key,
+			}
+		}
+	}
+}
+
+func setKeystoreFromEnv(cfg *bridgeCore.Config, isValidator bool, config *bridgeCoreUtils.KeystoreConfig, network string) {
+	if _, ok := cfg.Listeners[network]; ok {
+		if isValidator {
+			cfg.Listeners[network].Secret.Validator = &bridgeCoreUtils.SignMethodConfig{
+				KeystoreConfig: config,
 			}
 		}
 	}
@@ -284,6 +297,12 @@ func checkEnv(cfg *bridgeCore.Config) {
 				SignTimeout:   int64(signTimeout),
 			}
 			setKmsFromEnv(cfg, true, config, RoninNetwork)
+		} else if os.Getenv(roninValidatorKeystorePath) != "" {
+			config := &bridgeCoreUtils.KeystoreConfig{
+				KeystorePath: os.Getenv(roninValidatorKeystorePath),
+				Password:     os.Getenv(roninValidatorPassword),
+			}
+			setKeystoreFromEnv(cfg, true, config, RoninNetwork)
 		}
 
 		if os.Getenv(roninRelayKey) != "" {

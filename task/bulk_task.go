@@ -379,7 +379,9 @@ func parseSignatureAsRsv(signature []byte) roninGovernance.SignatureConsumerSign
 }
 
 func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.Bytes, error) {
-	domainSeparator := r.listener.Config().DomainSeparator
+	domainSeparators := r.listener.Config().DomainSeparators
+	domainSeparator := domainSeparators[receipt.chainId.Uint64()]
+
 	hash := solsha3.SoliditySHA3(
 		// types
 		[]string{"bytes32", "uint256", "uint256", "address", "address", "uint256", "uint256"},
@@ -387,12 +389,12 @@ func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.B
 		// values
 		[]interface{}{
 			domainSeparator,
-			big.NewInt(receipt.chainId.Int64()),
-			big.NewInt(receipt.withdrawId.Int64()),
+			receipt.chainId,
+			receipt.withdrawId,
 			receipt.recipient,
 			receipt.token,
-			big.NewInt(receipt.amount.Int64()),
-			big.NewInt(receipt.fee.Int64()),
+			receipt.amount,
+			receipt.fee.Int64(),
 		},
 	)
 
