@@ -9,8 +9,8 @@ import (
 	bridgeCoreModels "github.com/axieinfinity/bridge-core/models"
 	bridgeCoreStores "github.com/axieinfinity/bridge-core/stores"
 	"github.com/axieinfinity/bridge-core/utils"
-	crossbellGateway "github.com/axieinfinity/bridge-v2/generated_contracts/crossbellGateway"
-	mainchainGateway "github.com/axieinfinity/bridge-v2/generated_contracts/mainchainGateway"
+	crossbellGateway "github.com/axieinfinity/bridge-v2/bridge-contracts/generated_contracts/crossbellGateway"
+	mainchainGateway "github.com/axieinfinity/bridge-v2/bridge-contracts/generated_contracts/mainchainGateway"
 	"github.com/axieinfinity/bridge-v2/models"
 	"github.com/axieinfinity/bridge-v2/stores"
 	"github.com/axieinfinity/bridge-v2/task"
@@ -256,7 +256,7 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 		return err
 	}
 	// create caller
-	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(l.config.Contracts[task.ETH_GATEWAY_CONTRACT]), l.client)
+	caller, err := crossbellGateway.NewCrossbellGatewayCaller(common.HexToAddress(l.config.Contracts[task.CROSSBELL_GATEWAY_CONTRACT]), l.client)
 	if err != nil {
 		return err
 	}

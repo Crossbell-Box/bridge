@@ -4,7 +4,7 @@ replace github.com/ethereum/go-ethereum => github.com/axieinfinity/ronin v1.10.4
 
 replace github.com/axieinfinity/bridge-v2 => ./
 
-replace github.com/axieinfinity/bridge-core => github.com/Crossbell-Box/bridge-core v0.0.0-20230116152721-198356a83341
+replace github.com/axieinfinity/bridge-core => github.com/Crossbell-Box/bridge-core v0.0.0-20230129063245-d23396fbe29c
 
 replace github.com/axieinfinity/bridge-migrations => github.com/Crossbell-Box/bridge-migrations v0.0.0-20230117012649-97cf688c65c4
 
@@ -36,8 +36,6 @@ require (
 	github.com/miguelmota/go-solidity-sha3 v0.1.1
 	gorm.io/driver/postgres v1.4.5
 )
-
-require github.com/Crossbell-Box/bridge-contracts v0.0.0-20230116152603-ae6c94b86c68 // indirect
 
 require (
 	// github.com/Crossbell-Box/bridge-contracts v0.0.0-20230116152603-ae6c94b86c68 // indirect

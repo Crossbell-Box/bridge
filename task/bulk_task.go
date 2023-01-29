@@ -8,8 +8,8 @@ import (
 
 	roninGovernance "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/governance"
 
-	crossbellGateway "github.com/axieinfinity/bridge-v2/generated_contracts/crossbellGateway"
-	mainchainGateway "github.com/axieinfinity/bridge-v2/generated_contracts/mainchainGateway"
+	crossbellGateway "github.com/axieinfinity/bridge-v2/bridge-contracts/generated_contracts/crossbellGateway"
+	mainchainGateway "github.com/axieinfinity/bridge-v2/bridge-contracts/generated_contracts/mainchainGateway"
 	"github.com/axieinfinity/bridge-v2/stores"
 
 	bridgeCore "github.com/axieinfinity/bridge-core"
@@ -379,8 +379,7 @@ func parseSignatureAsRsv(signature []byte) roninGovernance.SignatureConsumerSign
 }
 
 func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.Bytes, error) {
-	domainSeparators := r.listener.Config().DomainSeparators
-	domainSeparator := domainSeparators[receipt.chainId.Uint64()]
+	domainSeparator := r.listener.Config().DomainSeparators[receipt.chainId.Uint64()]
 
 	hash := solsha3.SoliditySHA3(
 		// types
