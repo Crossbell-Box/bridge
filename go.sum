@@ -35,8 +35,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/Crossbell-Box/bridge-core v0.0.0-20230129063245-d23396fbe29c h1:1Dj+nDIO/Jil93lYRbmz9qLdIpcVGOXajhtQEICam5E=
 github.com/Crossbell-Box/bridge-core v0.0.0-20230129063245-d23396fbe29c/go.mod h1:zNvVohvQEp6riYLWC5TjQTHqitQZnRmDpbvT7SfvgN4=
-github.com/Crossbell-Box/bridge-migrations v0.0.0-20230117012649-97cf688c65c4 h1:duidDIKY+PwLsmShOmRapt6Upt6Evtn7LPxarx34QR4=
-github.com/Crossbell-Box/bridge-migrations v0.0.0-20230117012649-97cf688c65c4/go.mod h1:867OEbEWDp965PZ44feJElRZz4RuNDceEbjCjWBbxe0=
+github.com/Crossbell-Box/bridge-migrations v0.0.0-20230130132937-1313d41d0f10 h1:GSYGYaN420Weqft7ZmgWLlUNWogD+8oIZYtFAvPSgAQ=
+github.com/Crossbell-Box/bridge-migrations v0.0.0-20230130132937-1313d41d0f10/go.mod h1:867OEbEWDp965PZ44feJElRZz4RuNDceEbjCjWBbxe0=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=

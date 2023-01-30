@@ -6,7 +6,7 @@ replace github.com/axieinfinity/bridge-v2 => ./
 
 replace github.com/axieinfinity/bridge-core => github.com/Crossbell-Box/bridge-core v0.0.0-20230129063245-d23396fbe29c
 
-replace github.com/axieinfinity/bridge-migrations => github.com/Crossbell-Box/bridge-migrations v0.0.0-20230117012649-97cf688c65c4
+replace github.com/axieinfinity/bridge-migrations => github.com/Crossbell-Box/bridge-migrations v0.0.0-20230130132937-1313d41d0f10
 
 go 1.17
 
