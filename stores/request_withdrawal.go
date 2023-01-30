@@ -16,3 +16,10 @@ func NewRequestWithdrawalStore(db *gorm.DB) *requestWithdrawalStore {
 func (d *requestWithdrawalStore) Save(requestWithdrawal *models.RequestWithdrawal) error {
 	return d.Create(requestWithdrawal).Error
 }
+
+func (d *requestWithdrawalStore) Update(requestWithdrawal *models.RequestWithdrawal) error {
+	columns := map[string]interface{}{
+		"status": requestWithdrawal.Status,
+	}
+	return d.Model(&models.RequestWithdrawal{}).Where("mainchain_id = ? AND withdrawal_id = ?", requestWithdrawal.MainchainId, requestWithdrawal.WithdrawalId).Updates(columns).Error
+}

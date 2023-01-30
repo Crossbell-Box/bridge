@@ -69,6 +69,26 @@ func (l *CrossbellListener) StoreMainchainWithdrewCallback(fromChainId *big.Int,
 }
 
 // StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
+func (l *CrossbellListener) RequestWithdrewDoneCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	log.Info("[CrossbellListener] StoreMainchainWithdrawCallback", "tx", tx.GetHash().Hex())
+	mainchainEvent := new(mainchainGateway.MainchainGatewayWithdrew)
+	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
+
+	if err = l.utilsWrapper.UnpackLog(*mainchainGatewayAbi, mainchainEvent, "Withdrew", data); err != nil {
+		return err
+	}
+	// store ronEvent to database at withdrawal
+	return l.bridgeStore.GetRequestWithdrawalStore().Update(&models.RequestWithdrawal{
+		WithdrawalId: mainchainEvent.WithdrawalId.Int64(),
+		MainchainId:  mainchainEvent.ChainId.Int64(),
+		Status:       "done",
+	})
+}
+
+// StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
 func (l *CrossbellListener) StoreCrossbellDepositedCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	log.Info("[CrossbellListener] StoreCrossbellDepositedCallback", "tx", tx.GetHash().Hex())
 	crossbellEvent := new(crossbellGateway.CrossbellGatewayDeposited)
@@ -88,6 +108,25 @@ func (l *CrossbellListener) StoreCrossbellDepositedCallback(fromChainId *big.Int
 		CrossbellTokenAddress: crossbellEvent.Token.Hex(),     // token address on mainchain
 		TokenQuantity:         crossbellEvent.Amount.String(),
 		Transaction:           tx.GetHash().Hex(),
+	})
+}
+
+func (l *CrossbellListener) RequestDepositedDoneCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
+	log.Info("[CrossbellListener] StoreCrossbellDepositedCallback", "tx", tx.GetHash().Hex())
+	crossbellEvent := new(crossbellGateway.CrossbellGatewayDeposited)
+	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+	if err != nil {
+		return err
+	}
+
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "Deposited", data); err != nil {
+		return err
+	}
+	// store ronEvent to database at withdrawal
+	return l.bridgeStore.GetRequestDepositStore().Update(&models.RequestDeposit{
+		DepositId:   crossbellEvent.DepositId.Int64(),
+		MainchainId: crossbellEvent.ChainId.Int64(),
+		Status:      "done",
 	})
 }
 
@@ -149,13 +188,14 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 	}
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetRequestWithdrawalStore().Save(&models.RequestWithdrawal{
-		MainChainId:           crossbellEvent.ChainId.Int64(),
+		MainchainId:           crossbellEvent.ChainId.Int64(),
 		WithdrawalId:          crossbellEvent.WithdrawalId.Int64(),
 		RecipientAddress:      crossbellEvent.Recipient.Hex(),
 		MainchainTokenAddress: crossbellEvent.Token.Hex(), // token address on mainchain
 		TokenQuantity:         crossbellEvent.Amount.String(),
 		Fee:                   crossbellEvent.Fee.String(),
 		Transaction:           tx.GetHash().Hex(),
+		Status:                "pending",
 	})
 }
 
@@ -179,6 +219,7 @@ func (l *CrossbellListener) StoreRequestDeposit(fromChainId *big.Int, tx bridgeC
 		CrossbellTokenAddress: mainchainEvent.Token.Hex(), // token address on mainchain
 		TokenQuantity:         mainchainEvent.Amount.String(),
 		Transaction:           tx.GetHash().Hex(),
+		Status:                "pending",
 	})
 }
 

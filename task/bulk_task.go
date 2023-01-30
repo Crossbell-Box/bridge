@@ -388,12 +388,12 @@ func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.B
 		// values
 		[]interface{}{
 			domainSeparator,
-			receipt.chainId,
-			receipt.withdrawId,
+			big.NewInt(receipt.chainId.Int64()),
+			big.NewInt(receipt.withdrawId.Int64()),
 			receipt.recipient,
 			receipt.token,
-			receipt.amount,
-			receipt.fee.Int64(),
+			big.NewInt(receipt.amount.Int64()),
+			big.NewInt(receipt.fee.Int64()),
 		},
 	)
 
@@ -408,7 +408,6 @@ func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.B
 	}
 
 	signature[64] += 27 // Transform V from 0/1 to 27/28 according to the yellow paper
-	fmt.Println("the signature is : ", fmt.Sprintf("0x%x", signature))
 	return signature, nil
 }
 
