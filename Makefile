@@ -24,10 +24,9 @@ abigen:
 	forge inspect MainchainGateway b > ../build/contract/MainchainGateway.bin && \
 	forge inspect CrossbellGateway b > ../build/contract/CrossbellGateway.bin && \
 	cd ../ && \
-	mkdir -p generated_contracts/mainchainGateway
-	mkdir -p generated_contracts/crossbellGateway
-	abigen --bin=build/contract/MainchainGateway.bin --abi=build/contract/MainchainGateway.abi --pkg=mainchainGateway --out=generated_contracts/mainchainGateway/mainchainGateway.go
-	abigen --bin=build/contract/CrossbellGateway.bin --abi=build/contract/CrossbellGateway.abi --pkg=crossbellGateway --out=generated_contracts/crossbellGateway/crossbellGateway.go
-
+	mkdir -p bridge-contracts/generated_contracts/mainchainGateway
+	mkdir -p bridge-contracts/generated_contracts/crossbellGateway
+	abigen --bin=build/contract/MainchainGateway.bin --abi=build/contract/MainchainGateway.abi --pkg=mainchainGateway --out=bridge-contracts/generated_contracts/crossbellGateway/crossbellGateway.go
+	abigen --bin=build/contract/CrossbellGateway.bin --abi=build/contract/CrossbellGateway.abi --pkg=crossbellGateway --out=bridge-contracts/generated_contracts/mainchainGateway/mainchainGateway.go
 run:
 	@cd cmd/bridge && go run main.go

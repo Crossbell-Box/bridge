@@ -8,8 +8,8 @@ import (
 
 	roninGovernance "github.com/axieinfinity/bridge-contracts/generated_contracts/ronin/governance"
 
-	crossbellGateway "github.com/axieinfinity/bridge-v2/generated_contracts/crossbellGateway"
-	mainchainGateway "github.com/axieinfinity/bridge-v2/generated_contracts/mainchainGateway"
+	crossbellGateway "github.com/axieinfinity/bridge-v2/bridge-contracts/generated_contracts/crossbellGateway"
+	mainchainGateway "github.com/axieinfinity/bridge-v2/bridge-contracts/generated_contracts/mainchainGateway"
 	"github.com/axieinfinity/bridge-v2/stores"
 
 	bridgeCore "github.com/axieinfinity/bridge-core"
@@ -379,7 +379,8 @@ func parseSignatureAsRsv(signature []byte) roninGovernance.SignatureConsumerSign
 }
 
 func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.Bytes, error) {
-	domainSeparator := r.listener.Config().DomainSeparator
+	domainSeparator := r.listener.Config().DomainSeparators[receipt.chainId.Uint64()]
+
 	hash := solsha3.SoliditySHA3(
 		// types
 		[]string{"bytes32", "uint256", "uint256", "address", "address", "uint256", "uint256"},
@@ -387,12 +388,12 @@ func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.B
 		// values
 		[]interface{}{
 			domainSeparator,
-			big.NewInt(receipt.chainId.Int64()),
-			big.NewInt(receipt.withdrawId.Int64()),
+			receipt.chainId,
+			receipt.withdrawId,
 			receipt.recipient,
 			receipt.token,
-			big.NewInt(receipt.amount.Int64()),
-			big.NewInt(receipt.fee.Int64()),
+			receipt.amount,
+			receipt.fee.Int64(),
 		},
 	)
 
