@@ -20,10 +20,12 @@ type DepositStore interface {
 }
 type RequestDepositStore interface {
 	Save(requestDeposit *models.RequestDeposit) error
+	Update(requestDeposit *models.RequestDeposit) error
 }
 
 type RequestWithdrawalStore interface {
 	Save(RequestWithdrawal *models.RequestWithdrawal) error
+	Update(RequestWithdrawal *models.RequestWithdrawal) error
 }
 
 type ProcessedReceiptStore interface {
