@@ -14,6 +14,7 @@ type RequestWithdrawal struct {
 	Fee                   string `json:"fee" gorm:"column:fee;not null"`
 	Transaction           string `json:"transaction" gorm:"column:transaction;index:idx_withdrawal_transaction;not null"`
 	Status                string `json:"status" gorm:"column:status"`
+	WithdrawalTransaction string `json:"withdrawalTransaction" gorm:"column:withdrawal_transaction"`
 }
 
 func (m RequestWithdrawal) BeforeCreate(tx *gorm.DB) (err error) {

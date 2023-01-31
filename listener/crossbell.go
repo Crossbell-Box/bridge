@@ -44,33 +44,8 @@ func (l *CrossbellListener) NewJobFromDB(job *bridgeCoreModels.Job) (bridgeCore.
 }
 
 // StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
-func (l *CrossbellListener) StoreMainchainWithdrewCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	log.Info("[CrossbellListener] StoreMainchainWithdrawCallback", "tx", tx.GetHash().Hex())
-	mainchainEvent := new(mainchainGateway.MainchainGatewayWithdrew)
-	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
-	if err != nil {
-		return err
-	}
-
-	if err = l.utilsWrapper.UnpackLog(*mainchainGatewayAbi, mainchainEvent, "Withdrew", data); err != nil {
-		return err
-	}
-	// store ronEvent to database at withdrawal
-	return l.bridgeStore.GetWithdrawalStore().Save(&models.Withdrawal{
-		WithdrawalId:          mainchainEvent.WithdrawalId.Int64(),
-		MainChainId:           mainchainEvent.ChainId.Int64(),
-		RecipientAddress:      mainchainEvent.Recipient.Hex(), // from address (the address who submits the signatures into mainchain and gets the fee)
-		MainchainTokenAddress: mainchainEvent.Token.Hex(),     // token address on mainchain
-		TokenQuantity:         mainchainEvent.Amount.String(),
-		Fee:                   mainchainEvent.Fee.String(),
-		WithdrawerAddress:     tx.GetFromAddress(),
-		Transaction:           tx.GetHash().Hex(),
-	})
-}
-
-// StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
 func (l *CrossbellListener) RequestWithdrewDoneCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	log.Info("[CrossbellListener] StoreMainchainWithdrawCallback", "tx", tx.GetHash().Hex())
+	log.Info("[CrossbellListener] RequestWithdrewDoneCallback", "tx", tx.GetHash().Hex())
 	mainchainEvent := new(mainchainGateway.MainchainGatewayWithdrew)
 	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
 	if err != nil {
@@ -82,9 +57,10 @@ func (l *CrossbellListener) RequestWithdrewDoneCallback(fromChainId *big.Int, tx
 	}
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetRequestWithdrawalStore().Update(&models.RequestWithdrawal{
-		WithdrawalId: mainchainEvent.WithdrawalId.Int64(),
-		MainchainId:  mainchainEvent.ChainId.Int64(),
-		Status:       "done",
+		WithdrawalId:          mainchainEvent.WithdrawalId.Int64(),
+		MainchainId:           mainchainEvent.ChainId.Int64(),
+		Status:                "done",
+		WithdrawalTransaction: tx.GetHash().Hex(),
 	})
 }
 
@@ -196,6 +172,7 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 		Fee:                   crossbellEvent.Fee.String(),
 		Transaction:           tx.GetHash().Hex(),
 		Status:                "pending",
+		WithdrawalTransaction: "",
 	})
 }
 
