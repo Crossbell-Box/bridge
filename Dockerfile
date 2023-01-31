@@ -42,4 +42,6 @@ COPY --from=builder /go/bin/bridge /usr/local/bin/bridge
 COPY --from=builder /opt/bridge/config/ ./
 COPY --from=builder /opt/bridge/docker/entrypoint.sh ./
 
+RUN apt update && apt install -y jq
+
 ENTRYPOINT ["./entrypoint.sh"]
