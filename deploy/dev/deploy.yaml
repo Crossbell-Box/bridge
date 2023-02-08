@@ -26,6 +26,12 @@ spec:
               value: /opt/bridge/config/config.indexer.json
             - name: VERBOSITY
               value: "1"
+          command:
+            - bridge
+            - --config
+            - /opt/bridge/config/config.indexer.json
+            - --verbosity
+            - "1"
           ports:
             - containerPort: 3000
               protocol: TCP
