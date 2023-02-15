@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/signer/core"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 
 const (
@@ -84,7 +84,7 @@ func (r *task) sendTransaction(sendTx func(task *models.Task) (doneTasks, proces
 }
 
 type signDataOpts struct {
-	SignTypedDataCallback func(typedData core.TypedData) (hexutil.Bytes, error)
+	SignTypedDataCallback func(typedData apitypes.TypedData) (hexutil.Bytes, error)
 }
 
 // validatorsAscending implements the sort interface to allow sorting a list of addresses

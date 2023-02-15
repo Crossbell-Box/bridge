@@ -30,19 +30,20 @@ type EthereumListener struct {
 	chainId *big.Int
 	jobId   int32
 
-	rpcUrl           string
-	name             string
-	period           time.Duration
-	currentBlock     atomic.Value
-	safeBlockRange   uint64
-	fromHeight       uint64
-	domainSeparators map[uint64]string
-	batches          sync.Map
-	utilsWrapper     utils.Utils
-	client           utils.EthClient
-	validatorSign    bridgeCoreUtils.ISign
-	store            stores.MainStore
-	listeners        map[string]bridgeCore.Listener
+	rpcUrl               string
+	name                 string
+	period               time.Duration
+	currentBlock         atomic.Value
+	safeBlockRange       uint64
+	preventOmissionRange uint64
+	fromHeight           uint64
+	domainSeparators     map[uint64]string
+	batches              sync.Map
+	utilsWrapper         utils.Utils
+	client               utils.EthClient
+	validatorSign        bridgeCoreUtils.ISign
+	store                stores.MainStore
+	listeners            map[string]bridgeCore.Listener
 
 	prepareJobChan chan bridgeCore.JobHandler
 	tasks          []bridgeCore.TaskHandler
@@ -59,20 +60,21 @@ func (e *EthereumListener) GetListener(s string) bridgeCore.Listener {
 func NewEthereumListener(ctx context.Context, cfg *bridgeCore.LsConfig, helpers utils.Utils, store stores.MainStore) (*EthereumListener, error) {
 	newCtx, cancelFunc := context.WithCancel(ctx)
 	ethListener := &EthereumListener{
-		name:             cfg.Name,
-		period:           cfg.LoadInterval,
-		currentBlock:     atomic.Value{},
-		ctx:              newCtx,
-		cancelCtx:        cancelFunc,
-		fromHeight:       cfg.FromHeight,
-		domainSeparators: cfg.DomainSeparators,
-		utilsWrapper:     utils.NewUtils(),
-		store:            store,
-		config:           cfg,
-		listeners:        make(map[string]bridgeCore.Listener),
-		chainId:          hexutil.MustDecodeBig(cfg.ChainId),
-		safeBlockRange:   cfg.SafeBlockRange,
-		tasks:            make([]bridgeCore.TaskHandler, 0),
+		name:                 cfg.Name,
+		period:               cfg.LoadInterval,
+		currentBlock:         atomic.Value{},
+		ctx:                  newCtx,
+		cancelCtx:            cancelFunc,
+		fromHeight:           cfg.FromHeight,
+		domainSeparators:     cfg.DomainSeparators,
+		utilsWrapper:         utils.NewUtils(),
+		store:                store,
+		config:               cfg,
+		listeners:            make(map[string]bridgeCore.Listener),
+		chainId:              hexutil.MustDecodeBig(cfg.ChainId),
+		safeBlockRange:       cfg.SafeBlockRange,
+		preventOmissionRange: cfg.PreventOmissionRange,
+		tasks:                make([]bridgeCore.TaskHandler, 0),
 	}
 	if helpers != nil {
 		ethListener.utilsWrapper = helpers
@@ -118,6 +120,10 @@ func (e *EthereumListener) Period() time.Duration {
 
 func (e *EthereumListener) GetSafeBlockRange() uint64 {
 	return e.safeBlockRange
+}
+
+func (e *EthereumListener) GetPreventOmissionRange() uint64 {
+	return e.preventOmissionRange
 }
 
 func (e *EthereumListener) IsDisabled() bool {
