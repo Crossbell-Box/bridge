@@ -2,7 +2,7 @@ module github.com/Crossbell-Box/bridge
 
 replace github.com/axieinfinity/bridge-v2 => ./
 
-replace github.com/axieinfinity/bridge-core => github.com/Crossbell-Box/bridge-core v0.0.0-20230211122628-133d94494764
+replace github.com/axieinfinity/bridge-core => github.com/Crossbell-Box/bridge-core v0.0.0-20230218061833-f3e2a37474a0
 
 replace github.com/axieinfinity/bridge-migrations => github.com/Crossbell-Box/bridge-migrations v0.0.0-20230211122754-a6378691b5cf
 

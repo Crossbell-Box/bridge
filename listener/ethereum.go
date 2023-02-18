@@ -31,6 +31,7 @@ type EthereumListener struct {
 	jobId   int32
 
 	rpcUrl               string
+	slackUrl             string
 	name                 string
 	period               time.Duration
 	currentBlock         atomic.Value
@@ -81,7 +82,7 @@ func NewEthereumListener(ctx context.Context, cfg *bridgeCore.LsConfig, helpers 
 	}
 	client, err := ethListener.utilsWrapper.NewEthClient(cfg.RpcUrl)
 	if err != nil {
-		log.Error(fmt.Sprintf("[New%sListener] error while dialing rpc client", cfg.Name), "err", err, "url", cfg.RpcUrl)
+		log.Error(fmt.Sprintf("[New%sListener] error while dialing rpc client", cfg.Name), "err", err, "url", cfg.RpcUrl, "slackUrl", cfg.SlackUrl)
 		return nil, err
 	}
 	ethListener.client = client
