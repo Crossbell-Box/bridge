@@ -61,35 +61,6 @@ func (l *CrossbellListener) RequestWithdrewDoneCallback(fromChainId *big.Int, tx
 		return err
 	}
 
-	if l.config.SlackUrl != "" {
-		log.Info("[Slack Hook] Sending Withdraw to slack", "tx", tx.GetHash().Hex())
-
-		// create caller
-		caller, err := mainchainGateway.NewMainchainGatewayCaller(common.HexToAddress(l.config.Contracts[task.MAINCHAIN_GATEWAY_CONTRACT]), l.client)
-		if err != nil {
-			return err
-		}
-		// check remaining quota
-		remainingQuota, err := caller.GetDailyWithdrawalRemainingQuota(nil, mainchainEvent.Token)
-		if err != nil {
-			log.Error("[Slack hook] error while querying remainingQuota ", "error", err)
-		}
-
-		RequestWithdrawInfo := RequestWithdrawInfo{
-			MainchainId:      mainchainEvent.ChainId.Int64(),
-			WithdrawalId:     mainchainEvent.WithdrawalId.Int64(),
-			FromAddress:      tx.GetFromAddress(),
-			RecipientAddress: mainchainEvent.Recipient.Hex(),
-			TokenQuantity:    mainchainEvent.Amount.String(),
-			Fee:              mainchainEvent.Fee.String(),
-			Transaction:      tx.GetHash().Hex(),
-			RemainingQuota:   remainingQuota.String(),
-		}
-		if err = ReqPostRequestWithdraw(l.config.SlackUrl, RequestWithdrawInfo, tx, ":mega::mega::mega:New withdrawal completed!!!", ":o:"); err != nil {
-			log.Error("[Slack hook] error while sending post req to slack", "error", err)
-		}
-	}
-
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetRequestWithdrawalStore().Update(&models.RequestWithdrawal{
 		WithdrawalId:          mainchainEvent.WithdrawalId.Int64(),
@@ -378,7 +349,6 @@ func ReqPostRequestWithdraw(slackUrl string, requestWithdrawInfo RequestWithdraw
 
 	myJson := SlackMessage{Text: text, Blocks: Blocks}
 	data, err := json.Marshal(myJson)
-
 	if err != nil {
 		log.Error("[ReqPostRequestWithdraw] error while marshal message", "error", err)
 		return err
