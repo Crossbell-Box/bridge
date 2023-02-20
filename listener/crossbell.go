@@ -2,9 +2,11 @@ package listener
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"time"
 
+	"github.com/ashwanthkumar/slack-go-webhook"
 	bridgeCore "github.com/axieinfinity/bridge-core"
 	bridgeCoreModels "github.com/axieinfinity/bridge-core/models"
 	bridgeCoreStores "github.com/axieinfinity/bridge-core/stores"
@@ -55,6 +57,7 @@ func (l *CrossbellListener) RequestWithdrewDoneCallback(fromChainId *big.Int, tx
 	if err = l.utilsWrapper.UnpackLog(*mainchainGatewayAbi, mainchainEvent, "Withdrew", data); err != nil {
 		return err
 	}
+
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetRequestWithdrawalStore().Update(&models.RequestWithdrawal{
 		WithdrawalId:          mainchainEvent.WithdrawalId.Int64(),
@@ -98,6 +101,7 @@ func (l *CrossbellListener) RequestDepositedDoneCallback(fromChainId *big.Int, t
 	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "Deposited", data); err != nil {
 		return err
 	}
+
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetRequestDepositStore().Update(&models.RequestDeposit{
 		DepositId:   crossbellEvent.DepositId.Int64(),
@@ -162,6 +166,30 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "RequestWithdrawal", data); err != nil {
 		return err
 	}
+
+	if l.config.SlackUrl != "" {
+		webhookUrl := l.config.SlackUrl
+		log.Info("[CrossbellListener] Sending to slack", "slack hook url", webhookUrl)
+		attachment1 := slack.Attachment{}
+		attachment1.AddField(slack.Field{Title: "Event", Value: ":mega:RequestWithdraw"})
+		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: crossbellEvent.ChainId.String()})
+		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: crossbellEvent.WithdrawalId.String()})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: crossbellEvent.Amount.String()})
+		attachment1.AddField(slack.Field{Title: "Fee", Value: crossbellEvent.Fee.String()})
+		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://sepolia.etherscan.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
+
+		payload := slack.Payload{
+			Text:        fmt.Sprintf(":mega:*New <https://sepolia.etherscan.io/tx/%s|*withdraw request*> submitted!*:mega:\n", tx.GetHash().Hex()),
+			IconEmoji:   ":monkey_face:",
+			Attachments: []slack.Attachment{attachment1},
+		}
+
+		err := slack.Send(webhookUrl, "", payload)
+		if len(err) > 0 {
+			fmt.Printf("error: %s\n", err)
+		}
+	}
+
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetRequestWithdrawalStore().Save(&models.RequestWithdrawal{
 		MainchainId:           crossbellEvent.ChainId.Int64(),
