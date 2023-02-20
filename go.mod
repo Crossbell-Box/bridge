@@ -24,11 +24,17 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
+	github.com/jtolds/gls v4.20.0+incompatible // indirect
+	github.com/parnurzeal/gorequest v0.2.16 // indirect
+	github.com/smartystreets/assertions v1.2.0 // indirect
 	golang.org/x/sys v0.2.0 // indirect
+	moul.io/http2curl v1.0.0 // indirect
 )
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/ashwanthkumar/slack-go-webhook v0.0.0-20200209025033-430dd4e66960
 	github.com/axieinfinity/bridge-contracts v0.0.0-20230111072442-13fb0177332d
 	github.com/axieinfinity/bridge-core v0.1.2-0.20221221074635-375d6a0ea127
 	github.com/axieinfinity/bridge-migrations v0.0.0-00010101000000-000000000000

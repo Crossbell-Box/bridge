@@ -1,15 +1,12 @@
 package listener
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/big"
-	"net/http"
 	"time"
 
+	"github.com/ashwanthkumar/slack-go-webhook"
 	bridgeCore "github.com/axieinfinity/bridge-core"
 	bridgeCoreModels "github.com/axieinfinity/bridge-core/models"
 	bridgeCoreStores "github.com/axieinfinity/bridge-core/stores"
@@ -171,18 +168,25 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 	}
 
 	if l.config.SlackUrl != "" {
-		log.Info("[Slack Hook] Sending RequestWithdraw to slack", "tx", tx.GetHash().Hex())
-		RequestWithdrawInfo := RequestWithdrawInfo{
-			MainchainId:      crossbellEvent.ChainId.Int64(),
-			WithdrawalId:     crossbellEvent.WithdrawalId.Int64(),
-			FromAddress:      tx.GetFromAddress(),
-			RecipientAddress: crossbellEvent.Recipient.Hex(),
-			TokenQuantity:    crossbellEvent.Amount.String(),
-			Fee:              crossbellEvent.Fee.String(),
-			Transaction:      tx.GetHash().Hex(),
+		webhookUrl := l.config.SlackUrl
+		log.Info("[CrossbellListener] Sending to slack", "slack hook url", webhookUrl)
+		attachment1 := slack.Attachment{}
+		attachment1.AddField(slack.Field{Title: "Event", Value: ":mega:RequestWithdraw"})
+		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: crossbellEvent.ChainId.String()})
+		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: crossbellEvent.WithdrawalId.String()})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: crossbellEvent.Amount.String()})
+		attachment1.AddField(slack.Field{Title: "Fee", Value: crossbellEvent.Fee.String()})
+		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://sepolia.etherscan.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
+
+		payload := slack.Payload{
+			Text:        fmt.Sprintf(":mega:*New <https://sepolia.etherscan.io/tx/%s|*withdraw request*> submitted!*:mega:\n", tx.GetHash().Hex()),
+			IconEmoji:   ":monkey_face:",
+			Attachments: []slack.Attachment{attachment1},
 		}
-		if err = ReqPostRequestWithdraw(l.config.SlackUrl, RequestWithdrawInfo, tx, ":man-raising-hand::man-raising-hand::man-raising-hand:New withdraw request submitted!!!", ":x:"); err != nil {
-			log.Error("[Slack hook] error while sending post req to slack", "error", err)
+
+		err := slack.Send(webhookUrl, "", payload)
+		if len(err) > 0 {
+			fmt.Printf("error: %s\n", err)
 		}
 	}
 
@@ -333,86 +337,6 @@ func (l *CrossbellListener) DepositRequestedCallback(fromChainId *big.Int, tx br
 	return l.bridgeStore.GetTaskStore().Save(depositTask)
 }
 
-func ReqPostRequestWithdraw(slackUrl string, requestWithdrawInfo RequestWithdrawInfo, tx bridgeCore.Transaction, text string, emoji string) (err error) {
-	Fields := append([]Item{}, Item{Type: "mrkdwn", Text: fmt.Sprintf("*%sto chain id:*\n%d", emoji, requestWithdrawInfo.MainchainId)})
-	Fields = append(Fields, Item{Type: "mrkdwn", Text: fmt.Sprintf("*%sto chain id:*\n%d", emoji, requestWithdrawInfo.MainchainId)})
-	Fields = append(Fields, Item{Type: "mrkdwn", Text: fmt.Sprintf("*%swithdraw id:*\n%d", emoji, requestWithdrawInfo.WithdrawalId)})
-	Fields = append(Fields, Item{Type: "mrkdwn", Text: fmt.Sprintf("*%samount:*\n %s", emoji, requestWithdrawInfo.TokenQuantity)})
-	Fields = append(Fields, Item{Type: "mrkdwn", Text: fmt.Sprintf("*%sreceipt address:*\n %s", emoji, requestWithdrawInfo.RecipientAddress)})
-	Fields = append(Fields, Item{Type: "mrkdwn", Text: fmt.Sprintf("*%sfee:*\n %s", emoji, requestWithdrawInfo.Fee)})
-	Fields = append(Fields, Item{Type: "mrkdwn", Text: fmt.Sprintf("*%stransaction hash:*\n<https://sepolia.etherscan.io/tx/%s|%s>", emoji, tx.GetHash().Hex(), tx.GetHash().Hex())})
-	if requestWithdrawInfo.RemainingQuota != "" {
-		Fields = append(Fields, Item{Type: "mrkdwn", Text: fmt.Sprintf("*%sremainingQuota:*\n %s", emoji, requestWithdrawInfo.RemainingQuota)})
-	}
-
-	Blocks := append([]Block{}, Block{Type: "section", Fields: Fields})
-
-	myJson := SlackMessage{Text: text, Blocks: Blocks}
-	data, err := json.Marshal(myJson)
-  
-	if err != nil {
-		log.Error("[ReqPostRequestWithdraw] error while marshal message", "error", err)
-		return err
-	}
-
-	if response, err := ReqPostJson(slackUrl, string(data)); err != nil {
-		log.Error("[ReqPostRequestWithdraw] error while sending message", "error", err, "response", response)
-		return err
-	}
-	return nil
-}
-
-func ReqPostJson(targetUrl string, ContentStr string) (content string, err error) {
-
-	var jsonStr = []byte(ContentStr)
-
-	req, _ := http.NewRequest("POST", targetUrl, bytes.NewBuffer(jsonStr))
-
-	req.Header.Set("Content-Type", "application/json")
-
-	fmt.Println()
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	return string(body), nil
-
-}
-
 type CrossbellCallBackJob struct {
 	*EthCallbackJob
-}
-
-type SlackMessage struct {
-	Text   string  `json:"text"`
-	Blocks []Block `json:"blocks"`
-}
-
-type Block struct {
-	Type   string `json:"type"`
-	Fields []Item `json:"fields"`
-}
-
-type Item struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
-}
-
-type RequestWithdrawInfo struct {
-	MainchainId      int64
-	WithdrawalId     int64
-	FromAddress      string
-	RecipientAddress string
-	TokenQuantity    string
-	Fee              string
-	Transaction      string
-	RemainingQuota   string
 }

@@ -2,8 +2,10 @@ package listener
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
+	"github.com/ashwanthkumar/slack-go-webhook"
 	bridgeCore "github.com/axieinfinity/bridge-core"
 	bridgeCoreModels "github.com/axieinfinity/bridge-core/models"
 	bridgeCoreStores "github.com/axieinfinity/bridge-core/stores"
@@ -39,7 +41,7 @@ func (l *BinanceListener) NewJobFromDB(job *bridgeCoreModels.Job) (bridgeCore.Jo
 
 // WithdrewDone2SlackCallback send the withdrew event rto slack channel through slack hook
 func (l *BinanceListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	log.Info("[PolygonListener] WithdrewDone2SlackCallback", "tx", tx.GetHash().Hex())
+	log.Info("[BinanceListener] WithdrewDone2SlackCallback", "tx", tx.GetHash().Hex())
 	mainchainEvent := new(mainchainGateway.MainchainGatewayWithdrew)
 	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
 	if err != nil {
@@ -51,8 +53,8 @@ func (l *BinanceListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx br
 	}
 
 	if l.config.SlackUrl != "" {
-		log.Info("[Slack Hook] Sending Withdrew to slack", "tx", tx.GetHash().Hex())
-
+		webhookUrl := l.config.SlackUrl
+		log.Info("[BinanceListener] Sending to slack", "slack hook url", webhookUrl)
 		// create caller
 		caller, err := mainchainGateway.NewMainchainGatewayCaller(common.HexToAddress(l.config.Contracts[task.MAINCHAIN_GATEWAY_CONTRACT]), l.client)
 		if err != nil {
@@ -64,20 +66,25 @@ func (l *BinanceListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx br
 			log.Error("[Slack hook] error while querying remainingQuota ", "error", err)
 			return err
 		}
+		attachment1 := slack.Attachment{}
+		attachment1.AddAction(slack.Action{Type: "divider"})
+		attachment1.AddField(slack.Field{Title: "Event", Value: ":golf:Withdrew"})
+		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: mainchainEvent.ChainId.String()})
+		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: mainchainEvent.WithdrawalId.String()})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: mainchainEvent.Amount.String()})
+		attachment1.AddField(slack.Field{Title: "Fee", Value: mainchainEvent.Fee.String()})
+		attachment1.AddField(slack.Field{Title: "Remainning Quota", Value: remainingQuota.String()})
+		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://testnet.bscscan.com/tx/%s", tx.GetHash().Hex()), Style: "primary"})
 
-		RequestWithdrawInfo := RequestWithdrawInfo{
-			MainchainId:      mainchainEvent.ChainId.Int64(),
-			WithdrawalId:     mainchainEvent.WithdrawalId.Int64(),
-			FromAddress:      tx.GetFromAddress(),
-			RecipientAddress: mainchainEvent.Recipient.Hex(),
-			TokenQuantity:    mainchainEvent.Amount.String(),
-			Fee:              mainchainEvent.Fee.String(),
-			Transaction:      tx.GetHash().Hex(),
-			RemainingQuota:   remainingQuota.String(),
+		payload := slack.Payload{
+			Text:        fmt.Sprintf(":golf:*Successfully <https://testnet.bscscan.com/tx/%s|*Withdrew*> on BSC!*:golf:\n", tx.GetHash().Hex()),
+			IconEmoji:   ":monkey_face:",
+			Attachments: []slack.Attachment{attachment1},
 		}
-		if err = ReqPostRequestWithdraw(l.config.SlackUrl, RequestWithdrawInfo, tx, ":mega::mega::mega:New withdrawal completed!!!", ":o:"); err != nil {
-			log.Error("[Slack hook] error while sending post req to slack", "error", err)
-			return err
+
+		error := slack.Send(webhookUrl, "", payload)
+		if len(error) > 0 {
+			fmt.Printf("error: %s\n", err)
 		}
 	}
 	return nil
