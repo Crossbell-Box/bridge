@@ -25,13 +25,13 @@ spec:
             - name: CONFIG_PATH
               value: /opt/bridge/config/config.indexer.json
             - name: VERBOSITY
-              value: "60"
+              value: "100"
           command:
             - bridge
             - --config
             - /opt/bridge/config/config.indexer.json
             - --verbosity
-            - "60"
+            - "100"
           ports:
             - containerPort: 3000
               protocol: TCP
