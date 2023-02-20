@@ -349,6 +349,7 @@ func ReqPostRequestWithdraw(slackUrl string, requestWithdrawInfo RequestWithdraw
 
 	myJson := SlackMessage{Text: text, Blocks: Blocks}
 	data, err := json.Marshal(myJson)
+  
 	if err != nil {
 		log.Error("[ReqPostRequestWithdraw] error while marshal message", "error", err)
 		return err
