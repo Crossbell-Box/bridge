@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -42,6 +43,7 @@ type EthereumListener struct {
 	preventOmissionRange uint64
 	fromHeight           uint64
 	domainSeparators     map[uint64]string
+	decimals             map[uint64]uint64
 	batches              sync.Map
 	utilsWrapper         utils.Utils
 	client               utils.EthClient
@@ -71,6 +73,7 @@ func NewEthereumListener(ctx context.Context, cfg *bridgeCore.LsConfig, helpers 
 		cancelCtx:            cancelFunc,
 		fromHeight:           cfg.FromHeight,
 		domainSeparators:     cfg.DomainSeparators,
+		decimals:             cfg.Decimals,
 		utilsWrapper:         utils.NewUtils(),
 		store:                store,
 		config:               cfg,
@@ -144,6 +147,10 @@ func (e *EthereumListener) GetInitHeight() uint64 {
 
 func (e *EthereumListener) GetDomainSeparators() map[uint64]string {
 	return e.domainSeparators
+}
+
+func (e *EthereumListener) GetDecimals() map[uint64]uint64 {
+	return e.decimals
 }
 
 func (e *EthereumListener) GetTask(index int) bridgeCore.TaskHandler {
@@ -424,8 +431,8 @@ func (l *EthereumListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx b
 		attachment1.AddField(slack.Field{Title: "Event", Value: ":golf:Withdrew"})
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: mainchainEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: mainchainEvent.WithdrawalId.String()})
-		attachment1.AddField(slack.Field{Title: "Amount", Value: mainchainEvent.Amount.String()})
-		attachment1.AddField(slack.Field{Title: "Fee", Value: mainchainEvent.Fee.String()})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%.6v", (float64(mainchainEvent.Amount.Uint64()) / float64(math.Pow(10, 6))))})
+		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%.6v", (float64(mainchainEvent.Fee.Uint64()) / float64(math.Pow(10, 6))))})
 		attachment1.AddField(slack.Field{Title: "Remainning Quota", Value: remainingQuota.String()})
 		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://goerli.etherscan.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
 
