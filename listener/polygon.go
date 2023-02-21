@@ -3,6 +3,7 @@ package listener
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/ashwanthkumar/slack-go-webhook"
@@ -72,8 +73,8 @@ func (l *PolygonListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx br
 		attachment1.AddField(slack.Field{Title: "Event", Value: ":golf:Withdrew"})
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: mainchainEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: mainchainEvent.WithdrawalId.String()})
-		attachment1.AddField(slack.Field{Title: "Amount", Value: mainchainEvent.Amount.String()})
-		attachment1.AddField(slack.Field{Title: "Fee", Value: mainchainEvent.Fee.String()})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%.18v", (float64(mainchainEvent.Amount.Uint64()) / float64(math.Pow(10, 18))))})
+		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%.18v", (float64(mainchainEvent.Fee.Uint64()) / float64(math.Pow(10, 18))))})
 		attachment1.AddField(slack.Field{Title: "Remainning Quota", Value: remainingQuota.String()})
 		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://mumbai.polygonscan.com/tx/%s", tx.GetHash().Hex()), Style: "primary"})
 
