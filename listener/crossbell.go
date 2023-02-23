@@ -3,7 +3,6 @@ package listener
 import (
 	"context"
 	"fmt"
-	"math"
 	"math/big"
 	"time"
 
@@ -176,8 +175,8 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 		attachment1.AddField(slack.Field{Title: "Event", Value: ":mega:RequestWithdraw"})
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: crossbellEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: crossbellEvent.WithdrawalId.String()})
-		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%.18v", (float64(crossbellEvent.Amount.Uint64()) / float64(math.Pow(10, float64(decimal)))))})
-		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%.18v", (float64(crossbellEvent.Fee.Uint64()) / float64(math.Pow(10, float64(decimal)))))})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(crossbellEvent.Amount, decimal))})
+		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(crossbellEvent.Fee, decimal))})
 		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://sepolia.etherscan.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
 
 		payload := slack.Payload{
