@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -422,6 +421,7 @@ func (l *EthereumListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx b
 		}
 		// check remaining quota
 		remainingQuota, err := caller.GetDailyWithdrawalRemainingQuota(nil, mainchainEvent.Token)
+		remainingQuotaDecimal := l.utilsWrapper.ToDecimal(remainingQuota, 6)
 		if err != nil {
 			log.Error("[Slack hook] error while querying remainingQuota ", "error", err)
 			return err
@@ -431,9 +431,9 @@ func (l *EthereumListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx b
 		attachment1.AddField(slack.Field{Title: "Event", Value: ":golf:Withdrew"})
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: mainchainEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: mainchainEvent.WithdrawalId.String()})
-		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%.6v", (float64(mainchainEvent.Amount.Uint64()) / float64(math.Pow(10, 6))))})
-		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%.6v", (float64(mainchainEvent.Fee.Uint64()) / float64(math.Pow(10, 6))))})
-		attachment1.AddField(slack.Field{Title: "Remainning Quota", Value: remainingQuota.String()})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Amount, 6))})
+		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Fee, 6))})
+		attachment1.AddField(slack.Field{Title: "Remainning Quota", Value: fmt.Sprintf("%s $MIRA", remainingQuotaDecimal)})
 		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://goerli.etherscan.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
 
 		payload := slack.Payload{
