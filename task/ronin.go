@@ -12,7 +12,6 @@ import (
 	"github.com/axieinfinity/bridge-core/utils"
 	"github.com/axieinfinity/bridge-v2/models"
 	"github.com/axieinfinity/bridge-v2/stores"
-	bridgeUtils "github.com/axieinfinity/bridge-v2/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -104,14 +103,11 @@ func (r *RoninTask) Start() {
 	taskTicker := time.NewTicker(r.taskInterval)
 	processingTicker := time.NewTicker(r.txCheckInterval)
 
-	ethConfig := r.listener.GetListener(bridgeUtils.Ethereum).Config()
-	ethClient, _ := ethclient.Dial(ethConfig.RpcUrl)
-
 	for {
 		select {
 		case <-taskTicker.C:
 			go func() {
-				if err := r.processPending(ethClient); err != nil {
+				if err := r.processPending(); err != nil {
 					log.Error("[RoninTask] error while process tasks", "err", err)
 				}
 			}()
@@ -154,7 +150,7 @@ func (r *RoninTask) getLimitQuery(numberOfExcludedIds int) int {
 	return r.limitQuery
 }
 
-func (r *RoninTask) processPending(ethClient *ethclient.Client) error {
+func (r *RoninTask) processPending() error {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Error("[RoninTask][processPending] recover from panic", "err", err, "trace", string(debug.Stack()))

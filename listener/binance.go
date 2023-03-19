@@ -75,10 +75,10 @@ func (l *BinanceListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx br
 		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Amount, 18))})
 		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Fee, 18))})
 		attachment1.AddField(slack.Field{Title: "Remainning Quota", Value: fmt.Sprintf("%s $MIRA", remainingQuotaDecimal)})
-		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://testnet.bscscan.com/tx/%s", tx.GetHash().Hex()), Style: "primary"})
+		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://bscscan.com/tx/%s", tx.GetHash().Hex()), Style: "primary"})
 
 		payload := slack.Payload{
-			Text:        fmt.Sprintf(":golf:*Successfully <https://testnet.bscscan.com/tx/%s|*Withdrew*> on BSC!*:golf:\n", tx.GetHash().Hex()),
+			Text:        fmt.Sprintf(":golf:*Successfully <https://bscscan.com/tx/%s|*Withdrew*> on BSC!*:golf:\n", tx.GetHash().Hex()),
 			IconEmoji:   ":monkey_face:",
 			Attachments: []slack.Attachment{attachment1},
 		}

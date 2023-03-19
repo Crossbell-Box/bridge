@@ -177,10 +177,10 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: crossbellEvent.WithdrawalId.String()})
 		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(crossbellEvent.Amount, decimal))})
 		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(crossbellEvent.Fee, decimal))})
-		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://sepolia.etherscan.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
+		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://scan.crossbell.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
 
 		payload := slack.Payload{
-			Text:        fmt.Sprintf(":mega:*New <https://sepolia.etherscan.io/tx/%s|*withdraw request*> submitted!*:mega:\n", tx.GetHash().Hex()),
+			Text:        fmt.Sprintf(":mega:*New <https://scan.crossbell.io/tx/%s|*withdraw request*> submitted!*:mega:\n", tx.GetHash().Hex()),
 			IconEmoji:   ":monkey_face:",
 			Attachments: []slack.Attachment{attachment1},
 		}

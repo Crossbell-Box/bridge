@@ -434,10 +434,10 @@ func (l *EthereumListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx b
 		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Amount, 6))})
 		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Fee, 6))})
 		attachment1.AddField(slack.Field{Title: "Remainning Quota", Value: fmt.Sprintf("%s $MIRA", remainingQuotaDecimal)})
-		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://goerli.etherscan.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
+		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://etherscan.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
 
 		payload := slack.Payload{
-			Text:        fmt.Sprintf(":golf:*Successfully <https://goerli.etherscan.io/tx/%s|*Withdrew*> on Ethereum!*:golf:\n", tx.GetHash().Hex()),
+			Text:        fmt.Sprintf(":golf:*Successfully <https://etherscan.io/tx/%s|*Withdrew*> on Ethereum!*:golf:\n", tx.GetHash().Hex()),
 			IconEmoji:   ":monkey_face:",
 			Attachments: []slack.Attachment{attachment1},
 		}
