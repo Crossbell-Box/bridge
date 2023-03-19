@@ -245,13 +245,14 @@ func (l *CrossbellListener) IsUpTodate() bool {
 }
 
 func (l *CrossbellListener) provideReceiptSignature(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	var eventName = "RequestWithdrawal"
+	log.Info("[CrossbellListener] provideReceiptSignature", "tx", tx.GetHash().Hex())
 	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawal)
 	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
 	if err != nil {
 		return err
 	}
-	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, eventName, data); err != nil {
+
+	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "RequestWithdrawal", data); err != nil {
 		return err
 	}
 	log.Info("[CrossbellListener][ProvideReceiptSignatureCallback] result of calling MainchainWithdrew function", "receiptId", crossbellEvent.WithdrawalId.Int64(), "tx", tx.GetHash().Hex())
