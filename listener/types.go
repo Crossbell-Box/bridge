@@ -31,7 +31,6 @@ func NewEthBlock(client utils.EthClient, chainId *big.Int, block *ethtypes.Block
 		transaction, err := NewEthTransaction(chainId, tx)
 		if err != nil {
 			log.Error("[NewEthBlock] error while init new Eth Transaction", "err", err, "tx", tx.Hash().Hex())
-			return nil, err
 		}
 		ethBlock.txs = append(ethBlock.txs, transaction)
 	}
