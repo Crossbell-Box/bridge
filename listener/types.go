@@ -41,7 +41,6 @@ func NewEthBlock(client utils.EthClient, chainId *big.Int, block *ethtypes.Block
 		logs, err := client.FilterLogs(context.Background(), ethereum.FilterQuery{BlockHash: &blockHash})
 		if err != nil {
 			log.Error("[NewEthBlock] error while getting logs", "err", err, "block", block.NumberU64(), "hash", block.Hash().Hex())
-			return nil, err
 		}
 		// convert logs to ILog
 		for _, l := range logs {
