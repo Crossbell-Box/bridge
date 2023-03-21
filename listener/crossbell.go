@@ -173,6 +173,14 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 		log.Info("[CrossbellListener] Sending to slack", "slack hook url", webhookUrl)
 		attachment1 := slack.Attachment{}
 		attachment1.AddField(slack.Field{Title: "Event", Value: ":mega:RequestWithdraw"})
+
+		// query for character
+		response, error := fetchCharacters(tx.GetFromAddress())
+		if error != nil {
+			log.Error("[Query Primary Character] error while querying primary character ", "error", error)
+		} else {
+			attachment1.AddField(slack.Field{Title: "Event", Value: response})
+		}
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: crossbellEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: crossbellEvent.WithdrawalId.String()})
 		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(crossbellEvent.Amount, decimal))})

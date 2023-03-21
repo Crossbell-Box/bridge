@@ -2,9 +2,11 @@ package listener
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -247,9 +249,11 @@ func (e *EthereumListener) GetSubscriptions() map[string]*bridgeCore.Subscribe {
 
 func (e *EthereumListener) UpdateCurrentBlock(block bridgeCore.Block) error {
 	if block != nil && e.GetCurrentBlock().GetHeight() < block.GetHeight() {
-		log.Info(fmt.Sprintf("[%sListener] UpdateCurrentBlock", e.name), "block", block.GetHeight())
+		log.Info(fmt.Sprintf("[%sListener] UpdateCurrentBlock", e.name), "new block", block.GetHeight(), "current block", e.GetCurrentBlock().GetHeight())
 		e.currentBlock.Store(block)
 		return e.SaveCurrentBlockToDB()
+	} else if e.GetCurrentBlock().GetHeight() >= block.GetHeight() {
+		log.Info(fmt.Sprintf("[%sListener] UpdateCurrentBlock: block <= current block. Check the RPC if needed", e.name), "new block", block.GetHeight(), "current block", e.GetCurrentBlock().GetHeight())
 	}
 	return nil
 }
@@ -429,9 +433,17 @@ func (l *EthereumListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx b
 			log.Error("[Slack hook] error while querying remainingQuota ", "error", err)
 			return err
 		}
+
 		attachment1 := slack.Attachment{}
 		attachment1.AddAction(slack.Action{Type: "divider"})
 		attachment1.AddField(slack.Field{Title: "Event", Value: ":golf:Withdrew"})
+		// query for character
+		response, err := fetchCharacters(mainchainEvent.Recipient.String())
+		if err != nil {
+			log.Error("[Query Primary Character] error while querying primary character ", "error", err)
+		} else {
+			attachment1.AddField(slack.Field{Title: "Event", Value: response})
+		}
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: mainchainEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: mainchainEvent.WithdrawalId.String()})
 		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Amount, decimal))})
@@ -451,4 +463,43 @@ func (l *EthereumListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx b
 		}
 	}
 	return nil
+}
+
+func fetchCharacters(address string) (string, error) {
+	const (
+		baseURL      = "https://indexer.crossbell.io/v1/addresses/"
+		queryParams  = "/characters?limit=20&primary=true"
+		acceptHeader = "application/json"
+	)
+	client := &http.Client{}
+	url := baseURL + address + queryParams
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Accept", acceptHeader)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var data map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		return "", err
+	}
+
+	handle := ""
+	list, ok := data["list"].([]interface{})
+	if ok && len(list) > 0 {
+		firstItem, ok := list[0].(map[string]interface{})
+		if ok {
+			handle, _ = firstItem["handle"].(string)
+		}
+	}
+	return handle, nil
 }
