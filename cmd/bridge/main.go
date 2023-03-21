@@ -29,11 +29,13 @@ const (
 	configPath           = "CONFIG_PATH"
 	roninRpc             = "RONIN_RPC"
 	roninSlackUrl        = "RONIN_SLACK_URL"
+	roninScanUrl         = "RONIN_SLACK_URL"
 	roninValidatorKey    = "RONIN_VALIDATOR_KEY"
 	roninRelayKey        = "RONIN_RELAYER_KEY"
 	roninBridgeVoterKey  = "RONIN_BRIDGE_VOTER_KEY"
 	ethereumRpc          = "ETHEREUM_RPC"
 	ethereumSlackUrl     = "ETHEREUM_SLACK_URL"
+	ethereumScanUrl      = "ETHEREUM_SCAN_URL"
 	ethereumValidatorKey = "ETHEREUM_VALIDATOR_KEY"
 	ethereumRelayerKey   = "ETHEREUM_RELAYER_KEY"
 	verbosity            = "VERBOSITY"
@@ -131,6 +133,15 @@ func setSlackUrlFromEnv(cfg *bridgeCore.Config, slackUrl, network string) {
 	}
 	if _, ok := cfg.Listeners[network]; ok {
 		cfg.Listeners[network].RpcUrl = slackUrl
+	}
+}
+
+func setScanUrlFromEnv(cfg *bridgeCore.Config, scanUrl, network string) {
+	if scanUrl == "" {
+		return
+	}
+	if _, ok := cfg.Listeners[network]; ok {
+		cfg.Listeners[network].ScanUrl = scanUrl
 	}
 }
 
@@ -296,6 +307,7 @@ func checkEnv(cfg *bridgeCore.Config) {
 
 		setRpcUrlFromEnv(cfg, os.Getenv(roninRpc), RoninNetwork)
 		setSlackUrlFromEnv(cfg, os.Getenv(roninSlackUrl), RoninNetwork)
+		setScanUrlFromEnv(cfg, os.Getenv(roninScanUrl), RoninNetwork)
 
 		if os.Getenv(roninValidatorKey) != "" {
 			setKeyFromEnv(cfg, true, os.Getenv(roninValidatorKey), RoninNetwork)
@@ -341,7 +353,7 @@ func checkEnv(cfg *bridgeCore.Config) {
 		}
 
 		setRpcUrlFromEnv(cfg, os.Getenv(ethereumRpc), EthereumNetwork)
-		setRpcUrlFromEnv(cfg, os.Getenv(ethereumRpc), EthereumNetwork)
+		setScanUrlFromEnv(cfg, os.Getenv(ethereumScanUrl), EthereumNetwork)
 
 		if os.Getenv(ethereumValidatorKey) != "" {
 			setKeyFromEnv(cfg, true, os.Getenv(ethereumValidatorKey), EthereumNetwork)
