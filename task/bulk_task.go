@@ -388,12 +388,12 @@ func (r *bulkTask) signWithdrawalSignatures(receipt *withdrawReceipt) (hexutil.B
 		// values
 		[]interface{}{
 			domainSeparator,
-			big.NewInt(receipt.chainId.Int64()),
-			big.NewInt(receipt.withdrawId.Int64()),
+			receipt.chainId,
+			receipt.withdrawId,
 			receipt.recipient,
 			receipt.token,
-			big.NewInt(receipt.amount.Int64()),
-			big.NewInt(receipt.fee.Int64()),
+			receipt.amount,
+			receipt.fee,
 		},
 	)
 
