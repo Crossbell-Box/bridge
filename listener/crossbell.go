@@ -175,7 +175,7 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 		attachment1.AddField(slack.Field{Title: "Event", Value: ":mega:RequestWithdraw"})
 
 		// query for character
-		response, error := fetchCharacters(tx.GetFromAddress())
+		response, error := fetchCharacters(crossbellEvent.Recipient.String())
 		if error != nil {
 			log.Error("[Query Primary Character] error while querying primary character ", "error", error)
 		} else {

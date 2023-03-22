@@ -448,7 +448,7 @@ func (l *EthereumListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx b
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: mainchainEvent.WithdrawalId.String()})
 		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Amount, decimal))})
 		attachment1.AddField(slack.Field{Title: "Fee", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Fee, decimal))})
-		attachment1.AddField(slack.Field{Title: "Remainning Quota", Value: fmt.Sprintf("%s $MIRA", remainingQuotaDecimal)})
+		attachment1.AddField(slack.Field{Title: "Remaining Quota", Value: fmt.Sprintf("%s $MIRA", remainingQuotaDecimal)})
 		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("%s%s", l.config.ScanUrl, tx.GetHash().Hex()), Style: "primary"})
 
 		payload := slack.Payload{
