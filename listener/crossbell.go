@@ -179,7 +179,7 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 		if error != nil {
 			log.Error("[Query Primary Character] error while querying primary character ", "error", error)
 		} else {
-			attachment1.AddField(slack.Field{Title: "Primary Character", Value: fmt.Spirntf("[%s](https://crossbell.io/@%s)", response, response)})
+			attachment1.AddField(slack.Field{Title: "Primary Character", Value: fmt.Sprintf("[%s](https://crossbell.io/@%s)", response, response)})
 		}
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: crossbellEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: crossbellEvent.WithdrawalId.String()})
