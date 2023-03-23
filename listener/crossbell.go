@@ -116,7 +116,7 @@ func (l *CrossbellListener) RequestDepositedDoneCallback(fromChainId *big.Int, t
 		if error != nil {
 			log.Error("[Query Primary Character] error while querying primary character ", "error", error)
 		} else {
-			attachment1.AddField(slack.Field{Title: "Event", Value: response})
+			attachment1.AddField(slack.Field{Title: "Primary Character", Value: fmt.Sprintf("[%s](https://crossbell.io/@%s)", response, response)})
 		}
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: crossbellEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Deposit ID", Value: crossbellEvent.DepositId.String()})
@@ -268,7 +268,7 @@ func (l *CrossbellListener) StoreRequestDeposit(fromChainId *big.Int, tx bridgeC
 		if error != nil {
 			log.Error("[Query Primary Character] error while querying primary character ", "error", error)
 		} else {
-			attachment1.AddField(slack.Field{Title: "Event", Value: response})
+			attachment1.AddField(slack.Field{Title: "Primary Character", Value: fmt.Sprintf("[%s](https://crossbell.io/@%s)", response, response)})
 		}
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: mainchainEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Deposit ID", Value: mainchainEvent.DepositId.String()})

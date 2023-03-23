@@ -448,7 +448,7 @@ func (l *EthereumListener) WithdrewDone2SlackCallback(fromChainId *big.Int, tx b
 		if err != nil {
 			log.Error("[Query Primary Character] error while querying primary character ", "error", err)
 		} else {
-			attachment1.AddField(slack.Field{Title: "Event", Value: response})
+			attachment1.AddField(slack.Field{Title: "Primary Character", Value: fmt.Sprintf("[%s](https://crossbell.io/@%s)", response, response)})
 		}
 		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: mainchainEvent.ChainId.String()})
 		attachment1.AddField(slack.Field{Title: "Withdraw ID", Value: mainchainEvent.WithdrawalId.String()})
