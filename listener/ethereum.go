@@ -46,6 +46,7 @@ type EthereumListener struct {
 	fromHeight           uint64
 	domainSeparators     map[uint64]string
 	decimals             map[uint64]uint64
+	scanUrls             map[uint64]string
 	batches              sync.Map
 	utilsWrapper         utils.Utils
 	client               utils.EthClient
@@ -76,6 +77,7 @@ func NewEthereumListener(ctx context.Context, cfg *bridgeCore.LsConfig, helpers 
 		fromHeight:           cfg.FromHeight,
 		domainSeparators:     cfg.DomainSeparators,
 		decimals:             cfg.Decimals,
+		scanUrls:             cfg.ScanUrls,
 		utilsWrapper:         utils.NewUtils(),
 		store:                store,
 		config:               cfg,
@@ -153,6 +155,10 @@ func (e *EthereumListener) GetDomainSeparators() map[uint64]string {
 
 func (e *EthereumListener) GetDecimals() map[uint64]uint64 {
 	return e.decimals
+}
+
+func (e *EthereumListener) GetScanUrls() map[uint64]string {
+	return e.scanUrls
 }
 
 func (e *EthereumListener) GetTask(index int) bridgeCore.TaskHandler {

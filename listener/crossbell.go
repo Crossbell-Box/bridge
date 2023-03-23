@@ -67,7 +67,7 @@ func (l *CrossbellListener) RequestWithdrewDoneCallback(fromChainId *big.Int, tx
 	})
 }
 
-// StoreMainchainWithdrawCallback stores the receipt to own database for future check from ProvideReceiptSignatureCallback
+// store Deposited event
 func (l *CrossbellListener) StoreCrossbellDepositedCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	log.Info("[CrossbellListener] StoreCrossbellDepositedCallback", "tx", tx.GetHash().Hex())
 	crossbellEvent := new(crossbellGateway.CrossbellGatewayDeposited)
@@ -79,7 +79,7 @@ func (l *CrossbellListener) StoreCrossbellDepositedCallback(fromChainId *big.Int
 	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, crossbellEvent, "Deposited", data); err != nil {
 		return err
 	}
-	// store ronEvent to database at withdrawal
+
 	return l.bridgeStore.GetDepositStore().Save(&models.Deposit{
 		DepositId:             crossbellEvent.DepositId.Int64(),
 		MainchainId:           crossbellEvent.ChainId.Int64(),
@@ -90,8 +90,9 @@ func (l *CrossbellListener) StoreCrossbellDepositedCallback(fromChainId *big.Int
 	})
 }
 
+// set requestDeposit as done
 func (l *CrossbellListener) RequestDepositedDoneCallback(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
-	log.Info("[CrossbellListener] StoreCrossbellDepositedCallback", "tx", tx.GetHash().Hex())
+	log.Info("[CrossbellListener] RequestDepositedDoneCallback", "tx", tx.GetHash().Hex())
 	crossbellEvent := new(crossbellGateway.CrossbellGatewayDeposited)
 	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
 	if err != nil {
@@ -102,7 +103,38 @@ func (l *CrossbellListener) RequestDepositedDoneCallback(fromChainId *big.Int, t
 		return err
 	}
 
-	// store ronEvent to database at withdrawal
+	if l.config.SlackUrl != "" {
+		webhookUrl := l.config.SlackUrl
+		decimal := l.config.Decimals[l.chainId.Uint64()]
+		scanUrl := l.config.ScanUrls[l.chainId.Uint64()]
+		log.Info("[CrossbellListener] Sending to slack", "slack hook url", webhookUrl)
+		attachment1 := slack.Attachment{}
+		attachment1.AddField(slack.Field{Title: "Event", Value: ":golf:Deposited"})
+
+		// query for character
+		response, error := fetchCharacters(crossbellEvent.Recipient.String())
+		if error != nil {
+			log.Error("[Query Primary Character] error while querying primary character ", "error", error)
+		} else {
+			attachment1.AddField(slack.Field{Title: "Event", Value: response})
+		}
+		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: crossbellEvent.ChainId.String()})
+		attachment1.AddField(slack.Field{Title: "Deposit ID", Value: crossbellEvent.DepositId.String()})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(crossbellEvent.Amount, decimal))})
+		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://scan.crossbell.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
+
+		payload := slack.Payload{
+			Text:        fmt.Sprintf(":golf:*Successfully <%s%s|*Deposited*>!*:golf:\n", scanUrl, tx.GetHash().Hex()),
+			IconEmoji:   ":monkey_face:",
+			Attachments: []slack.Attachment{attachment1},
+		}
+
+		err := slack.Send(webhookUrl, "", payload)
+		if len(err) > 0 {
+			fmt.Printf("error: %s\n", err)
+		}
+	}
+
 	return l.bridgeStore.GetRequestDepositStore().Update(&models.RequestDeposit{
 		DepositId:   crossbellEvent.DepositId.Int64(),
 		MainchainId: crossbellEvent.ChainId.Int64(),
@@ -110,7 +142,6 @@ func (l *CrossbellListener) RequestDepositedDoneCallback(fromChainId *big.Int, t
 	})
 }
 
-// StoreCrossbellDepositedCallback stores the signatures to own database for future check from ProvideReceiptSignatureCallback
 func (l *CrossbellListener) StoreBatchSubmitWithdrawalSignatures(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	log.Info("[CrossbellListener] StoreBatchSubmitWithdrawalSignatures", "tx", tx.GetHash().Hex())
 	crossbellEvent := new(crossbellGateway.CrossbellGatewaySubmitWithdrawalSignature)
@@ -132,7 +163,6 @@ func (l *CrossbellListener) StoreBatchSubmitWithdrawalSignatures(fromChainId *bi
 	})
 }
 
-// StoreCrossbellDepositedCallback stores the signatures to own database for future check from ProvideReceiptSignatureCallback
 func (l *CrossbellListener) StoreDepositAck(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	log.Info("[CrossbellListener] StoreDepositAck", "tx", tx.GetHash().Hex())
 	crossbellEvent := new(crossbellGateway.CrossbellGatewayAckDeposit)
@@ -154,7 +184,6 @@ func (l *CrossbellListener) StoreDepositAck(fromChainId *big.Int, tx bridgeCore.
 	})
 }
 
-// StoreCrossbellDepositedCallback stores the signatures to own database for future check from ProvideReceiptSignatureCallback
 func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	log.Info("[CrossbellListener] StoreRequestWithdrawal", "tx", tx.GetHash().Hex())
 	crossbellEvent := new(crossbellGateway.CrossbellGatewayRequestWithdrawal)
@@ -213,18 +242,51 @@ func (l *CrossbellListener) StoreRequestWithdrawal(fromChainId *big.Int, tx brid
 	})
 }
 
-// StoreCrossbellDepositedCallback stores the signatures to own database for future check from ProvideReceiptSignatureCallback
+// store deposit request from mainchain
 func (l *CrossbellListener) StoreRequestDeposit(fromChainId *big.Int, tx bridgeCore.Transaction, data []byte) error {
 	log.Info("[CrossbellListener] StoreRequestDeposit", "tx", tx.GetHash().Hex())
 	mainchainEvent := new(mainchainGateway.MainchainGatewayRequestDeposit)
-	crossbellGatewayAbi, err := crossbellGateway.CrossbellGatewayMetaData.GetAbi()
+	mainchainGatewayAbi, err := mainchainGateway.MainchainGatewayMetaData.GetAbi()
 	if err != nil {
 		return err
 	}
 
-	if err = l.utilsWrapper.UnpackLog(*crossbellGatewayAbi, mainchainEvent, "RequestDeposit", data); err != nil {
+	if err = l.utilsWrapper.UnpackLog(*mainchainGatewayAbi, mainchainEvent, "RequestDeposit", data); err != nil {
 		return err
 	}
+
+	if l.config.SlackUrl != "" {
+		webhookUrl := l.config.SlackUrl
+		decimal := l.config.Decimals[l.chainId.Uint64()]
+		scanUrl := l.config.ScanUrls[mainchainEvent.ChainId.Uint64()]
+		log.Info("[CrossbellListener] Sending to slack", "slack hook url", webhookUrl)
+		attachment1 := slack.Attachment{}
+		attachment1.AddField(slack.Field{Title: "Event", Value: ":mega:RequestDeposit"})
+
+		// query for character
+		response, error := fetchCharacters(mainchainEvent.Recipient.String())
+		if error != nil {
+			log.Error("[Query Primary Character] error while querying primary character ", "error", error)
+		} else {
+			attachment1.AddField(slack.Field{Title: "Event", Value: response})
+		}
+		attachment1.AddField(slack.Field{Title: "Mainchain ID", Value: mainchainEvent.ChainId.String()})
+		attachment1.AddField(slack.Field{Title: "Deposit ID", Value: mainchainEvent.DepositId.String()})
+		attachment1.AddField(slack.Field{Title: "Amount", Value: fmt.Sprintf("%s $MIRA", l.utilsWrapper.ToDecimal(mainchainEvent.Amount, decimal))})
+		attachment1.AddAction(slack.Action{Type: "button", Text: "View Details", Url: fmt.Sprintf("https://scan.crossbell.io/tx/%s", tx.GetHash().Hex()), Style: "primary"})
+
+		payload := slack.Payload{
+			Text:        fmt.Sprintf(":mega:*New <%s%s|*Deposit request*> submitted!*:mega:\n", scanUrl, tx.GetHash().Hex()),
+			IconEmoji:   ":monkey_face:",
+			Attachments: []slack.Attachment{attachment1},
+		}
+
+		err := slack.Send(webhookUrl, "", payload)
+		if len(err) > 0 {
+			fmt.Printf("error: %s\n", err)
+		}
+	}
+
 	// store ronEvent to database at withdrawal
 	return l.bridgeStore.GetRequestDepositStore().Save(&models.RequestDeposit{
 		MainchainId:           mainchainEvent.ChainId.Int64(),
