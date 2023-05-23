@@ -254,13 +254,15 @@ func (e *EthereumListener) GetSubscriptions() map[string]*bridgeCore.Subscribe {
 }
 
 func (e *EthereumListener) UpdateCurrentBlock(block bridgeCore.Block) error {
-	if block != nil && e.GetCurrentBlock().GetHeight() < block.GetHeight() {
-		log.Info(fmt.Sprintf("[%sListener] UpdateCurrentBlock", e.name), "new block", block.GetHeight(), "current block", e.GetCurrentBlock().GetHeight())
-		e.currentBlock.Store(block)
-		return e.SaveCurrentBlockToDB()
-	} else if e.GetCurrentBlock().GetHeight() >= block.GetHeight() {
-		log.Info(fmt.Sprintf("[%sListener] UpdateCurrentBlock: block <= current block. Check the RPC if needed", e.name), "new block", block.GetHeight(), "current block", e.GetCurrentBlock().GetHeight())
-	}
+	if block != nil {
+		if e.GetCurrentBlock().GetHeight() < block.GetHeight() {
+			log.Info(fmt.Sprintf("[%sListener] UpdateCurrentBlock", e.name), "new block", block.GetHeight(), "current block", e.GetCurrentBlock().GetHeight())
+			e.currentBlock.Store(block)
+			return e.SaveCurrentBlockToDB()
+		} else if e.GetCurrentBlock().GetHeight() >= block.GetHeight() {
+			log.Info(fmt.Sprintf("[%sListener] UpdateCurrentBlock: block <= current block. Check the RPC if needed", e.name), "new block", block.GetHeight(), "current block", e.GetCurrentBlock().GetHeight())
+		}
+	} // else just skip this block
 	return nil
 }
 
