@@ -17,13 +17,13 @@ spec:
         app: bridge
         tier: validator
       annotations:
-        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/agent-inject-secret-keystore: kv/bridge
-        vault.hashicorp.com/role: 'read-bridge'
+        vault.hashicorp.com/role: "bridge"
     spec:
-      serviceAccountName: read-bridge
+      serviceAccountName: bridge
       containers:
-        - image: $IMAGE_TAG_RELEASE
+        - image: flosspicks/bridge
           imagePullPolicy: Always
           name: bridge-validator-01
           env:
@@ -48,9 +48,9 @@ spec:
               name: bridge-validator
               readOnly: true
       volumes:
-      - name: bridge-validator
-        secret:
-          secretName: bridge-validator
+        - name: bridge-validator
+          secret:
+            secretName: bridge-validator
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler

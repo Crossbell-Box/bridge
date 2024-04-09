@@ -18,7 +18,7 @@ spec:
         tier: indexer
     spec:
       containers:
-        - image: $IMAGE_TAG_RELEASE
+        - image: flosspicks/bridge
           imagePullPolicy: Always
           name: bridge-indexer
           env:
@@ -49,9 +49,9 @@ spec:
               name: bridge-indexer
               readOnly: true
       volumes:
-      - name: bridge-indexer
-        secret:
-          secretName: bridge-indexer
+        - name: bridge-indexer
+          secret:
+            secretName: bridge-indexer
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
