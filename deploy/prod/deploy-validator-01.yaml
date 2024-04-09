@@ -18,7 +18,7 @@ spec:
         tier: validator
       annotations:
         vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/agent-inject-secret-keystore: kv/bridge
+        vault.hashicorp.com/agent-inject-secret-keystore: kv/crossbell/bridge-key
         vault.hashicorp.com/role: "bridge"
     spec:
       serviceAccountName: bridge
