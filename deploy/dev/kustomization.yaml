@@ -7,3 +7,11 @@ resources:
   - sa.yaml
   - secrets.yaml
   - validator_secrets.yaml
+
+replicas:
+  - name: bridge-indexer
+    count: 0
+  - name: bridge-validator-01
+    count: 0
+  - name: bridge-validator-02
+    count: 0
