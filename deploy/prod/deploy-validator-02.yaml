@@ -19,7 +19,7 @@ spec:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/agent-inject-secret-keystore: kv/crossbell/bridge-key
-        vault.hashicorp.com/role: "bridge"
+        vault.hashicorp.com/role: "crossbell-bridge"
     spec:
       serviceAccountName: bridge
       containers:
