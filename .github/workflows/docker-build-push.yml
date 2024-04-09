@@ -25,7 +25,7 @@ jobs:
       cluster: dev
       namespace: crossbell
       releaseName: bridge
-      revision: dev
+      revision: master
       dir: deploy/dev
     secrets:
       ARGOCD_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
@@ -36,11 +36,11 @@ jobs:
       - build
     with:
       images: flosspicks/bridge
-      tag: sha-${{ github.sha }}
+      tag: ${{ github.ref_name }}
       cluster: prod
       namespace: crossbell
       releaseName: bridge
-      revision: main
+      revision: ${{ github.ref_name }}
       dir: deploy/prod
     secrets:
       ARGOCD_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
